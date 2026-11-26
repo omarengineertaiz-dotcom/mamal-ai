@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>رواد المعمل — معمل AI — مختبر الدوائر الإلكترونية الذكي</title>
+  <title>رواد المعمل — معمل AI — المختبر الهندسي الذكي</title>
   <link rel="stylesheet" href="./src/design-system/tokens.css">
   <link rel="stylesheet" href="./src/design-system/glass.css">
   <link rel="stylesheet" href="./src/design-system/animations.css">
@@ -924,6 +924,189 @@
         text-align: center;
       }
     }
+
+    /* === MAMAL AI v2.0 UPGRADES === */
+    .btn-mobile-menu {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+    }
+    .app-sidebar {
+      position: fixed !important;
+      top: 64px;
+      right: 0;
+      bottom: 0;
+      width: 250px;
+      z-index: 95;
+      transform: translateX(105%);
+      transition: transform 0.22s ease;
+      box-shadow: -8px 0 28px rgba(0, 0, 0, 0.45);
+    }
+    html[dir="ltr"] .app-sidebar {
+      right: auto;
+      left: 0;
+      transform: translateX(-105%);
+      box-shadow: 8px 0 28px rgba(0, 0, 0, 0.45);
+    }
+    .app-sidebar.mobile-open {
+      transform: translateX(0) !important;
+    }
+    .app-content {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    body.theme-light {
+      --bg-primary: #F4F6FA;
+      --bg-secondary: #FFFFFF;
+      --bg-elevated: #FFFFFF;
+      --surface-glass: rgba(255, 255, 255, 0.92);
+      --text-primary: #141821;
+      --text-secondary: #434B5C;
+      --text-muted: #626C80;
+      --border-glass: rgba(20, 24, 33, 0.14);
+      background-color: #F4F6FA !important;
+      color: #141821 !important;
+    }
+    body.theme-light .app-header,
+    body.theme-light .app-sidebar,
+    body.theme-light .smoky-glass-panel,
+    body.theme-light .meter-card,
+    body.theme-light .tutor-drawer-card,
+    body.theme-light .tool-card {
+      background: #FFFFFF !important;
+      color: #141821 !important;
+      border-color: rgba(20, 24, 33, 0.14) !important;
+    }
+    body.theme-light h1, body.theme-light h2, body.theme-light h3, body.theme-light h4,
+    body.theme-light .hero-title, body.theme-light .team-name, body.theme-light .brand-text-title {
+      color: #141821 !important;
+    }
+    body.theme-light #circuitCanvas {
+      background: #F9FBFD !important;
+    }
+
+    @keyframes flowForward {
+      from { stroke-dashoffset: 36; }
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes flowReverse {
+      from { stroke-dashoffset: 0; }
+      to { stroke-dashoffset: 36; }
+    }
+    .wire-flow-overlay {
+      fill: none;
+      stroke: #FFF3D1;
+      stroke-width: 3;
+      stroke-dasharray: 6 12;
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+    .wire-flow-cw {
+      animation: flowForward 0.75s linear infinite;
+    }
+    .wire-flow-ccw {
+      animation: flowReverse 0.75s linear infinite;
+    }
+    .wire-path.wire-selected {
+      stroke-width: 5 !important;
+      filter: drop-shadow(0 0 6px #FFFFFF);
+    }
+
+    .header-mini-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-glass);
+      color: var(--text-primary);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .header-mini-btn:hover {
+      border-color: var(--accent-orange);
+    }
+
+    .interactive-module-box {
+      margin-top: var(--spacing-xl);
+      padding: var(--spacing-xl);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--accent-orange);
+    }
+    .logic-input-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 18px;
+      border: 2px solid var(--border-glass);
+      cursor: pointer;
+      background: rgba(255,255,255,0.06);
+      color: var(--text-primary);
+    }
+    .logic-input-btn.is-high {
+      background: rgba(255, 129, 44, 0.25);
+      border-color: var(--accent-orange);
+      color: var(--accent-orange);
+    }
+    .logic-led-out {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      border: 2px solid var(--border-glass);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+    .logic-led-out.is-on {
+      background: radial-gradient(circle, #FFB347, #FF812C);
+      border-color: #FFD28E;
+      color: #15171B;
+      box-shadow: 0 0 22px rgba(255, 129, 44, 0.75);
+    }
+    .truth-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .truth-table th, .truth-table td {
+      border: 1px solid var(--border-glass);
+      padding: 5px 8px;
+      text-align: center;
+    }
+    .truth-table tr.active-row {
+      background: rgba(255, 129, 44, 0.2);
+      font-weight: 700;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 16px;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-card {
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+      border-radius: 14px;
+    }
   </style>
 </head>
 <body class="technical-grid-bg">
@@ -937,13 +1120,16 @@
       <a href="#/home" class="brand-logo" aria-label="الانتقال إلى الرئيسية">
         <div class="brand-symbol">⚡</div>
         <div class="brand-text-title">
-          <span>رواد المعمل</span>
-          <span class="brand-badge">G1.5</span>
+          <span>معمل AI</span>
+          <span class="brand-badge">v2.0</span>
         </div>
       </a>
     </div>
 
-    <div class="header-actions">
+    <div class="header-actions" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+      <button type="button" class="header-mini-btn" id="btnToggleLang" aria-label="تبديل اللغة">🌐 EN</button>
+      <button type="button" class="header-mini-btn" id="btnToggleTheme" aria-label="تبديل المظهر">☀️ فاتح</button>
+      <button type="button" class="header-mini-btn" id="btnOpenFeedback" aria-label="تقديم اقتراح أو ملاحظة">💬 اقتراح</button>
       <span class="status-badge status-badge-valid" id="headerStatus">
         ● المحرك متصل
       </span>
@@ -1006,18 +1192,18 @@
               <span>المرحلة G1.5 — هاكاثون شراع 2026</span>
             </div>
             <h1 class="hero-title">
-              معمل AI — مختبر الدوائر الإلكترونية الذكي<br>
+              معمل AI — المختبر الهندسي الذكي<br>
               <span class="highlight">تعلّم، جرّب، وأتقن دون خوف</span>
             </h1>
             <p class="hero-subtitle">
-              منصة هندسية عربية تفاعلية تحاكي الدوائر الكهربائية بدقة فيزيائية حتمية في المتصفح، مدعومة بمرشد ذكي يعزز التفكير الهندسي وفق المنهج السقراطي لتمكين مهندسي الغد.
+              منصة هندسية تفاعلية تحاكي الدوائر الكهربائية والإلكترونية بدقة فيزيائية حتمية في المتصفح، مدعومة بمرشد ذكاء اصطناعي يوجّهك خطوة بخطوة ويشرح أخطاء التوصيل لحظياً.
             </p>
             <div class="hero-ctas">
               <button class="glass-card-interactive glass-btn-primary" id="btnHeroGoLab" style="padding: 12px 24px; font-size: 16px;" aria-label="ابدأ التجربة في المختبر" tabindex="0">
-                🚀 ابدأ التجربة التفاعلية الآن
+                ➕ إنشاء تجربة جديدة
               </button>
               <button class="glass-card-interactive" id="btnHeroGoExperiments" style="padding: 12px 20px; font-size: 15px;" aria-label="استعراض فهرس التجارب" tabindex="0">
-                🧪 استعراض التجارب
+                🧪 تجارب جاهزة
               </button>
               <button class="glass-card-interactive" id="btnHeroGoGuide" style="padding: 12px 20px; font-size: 15px;" aria-label="قراءة دليل الاستخدام" tabindex="0">
                 📖 دليل الاستخدام
@@ -1036,7 +1222,7 @@
               </div>
               <div class="smoky-glass-panel stat-card">
                 <div class="stat-val">AI Tutor</div>
-                <div class="stat-desc">مرشد سقراطي للتوجيه المعرفي</div>
+                <div class="stat-desc">مرشد ذكاء اصطناعي للتوجيه اللحظي</div>
               </div>
             </div>
           </div>
@@ -1055,7 +1241,7 @@
               </div>
               <div class="smoky-glass-panel feature-card">
                 <div class="feature-icon-wrapper">🤖</div>
-                <h3>مرشد ذكي سقراطي</h3>
+                <h3>مرشد ذكاء اصطناعي لحظي</h3>
                 <p>لا يقدم الإجابات الجاهزة، بل يحلل حالة الدائرة ويوجه أسئلة ذكية تحفز التفكير الهندسي والاستنتاج الذاتي.</p>
               </div>
               <div class="smoky-glass-panel feature-card">
@@ -1148,7 +1334,7 @@
 
           <!-- Footer -->
           <footer class="app-footer">
-            <p style="margin-bottom: 8px;">رواد المعمل — معمل AI — مختبر الدوائر الإلكترونية الذكي © 2026</p>
+            <p style="margin-bottom: 8px;">رواد المعمل — معمل AI — المختبر الهندسي الذكي © 2026</p>
             <p>تطوير فريق رواد المعمل — المشارك في هاكاثون شراع 2026 (عُمر، صقر، زكريا، حمزة)</p>
           </footer>
         </section>
@@ -1245,7 +1431,65 @@
               </div>
             </div>
           </div>
-        </section>
+        
+          <!-- Active Interactive Labs: Series/Parallel + Digital Logic Gates -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: var(--spacing-xl); margin-top: var(--spacing-2xl);">
+            <!-- Lab 2: Series & Parallel Live Simulator -->
+            <div class="smoky-glass-panel interactive-module-box" id="seriesParallelLab">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px;">
+                <h3 style="font-size: var(--text-lg); color: var(--accent-orange);">🔀 محاكي التوالي والتوازي التفاعلي</h3>
+                <span class="status-badge status-badge-valid">نشطة</span>
+              </div>
+              <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <button type="button" class="btn-primary sp-mode-btn" data-mode="series" style="flex:1; padding:7px; font-size:12px;">توصيل على التوالي</button>
+                <button type="button" class="btn-secondary sp-mode-btn" data-mode="parallel" style="flex:1; padding:7px; font-size:12px;">توصيل على التوازي</button>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px; font-size:12px;">
+                <label>الجهد V<input id="spV" type="number" value="12" min="1" max="48" style="width:100%; margin-top:4px; padding:6px; border-radius:6px; background:rgba(21,23,27,0.7); color:#fff; border:1px solid var(--border-glass);"></label>
+                <label>R1 (Ω)<input id="spR1" type="number" value="200" min="10" max="10000" style="width:100%; margin-top:4px; padding:6px; border-radius:6px; background:rgba(21,23,27,0.7); color:#fff; border:1px solid var(--border-glass);"></label>
+                <label>R2 (Ω)<input id="spR2" type="number" value="300" min="10" max="10000" style="width:100%; margin-top:4px; padding:6px; border-radius:6px; background:rgba(21,23,27,0.7); color:#fff; border:1px solid var(--border-glass);"></label>
+              </div>
+              <div id="spResultsBox" style="background:rgba(21,23,27,0.45); padding:12px; border-radius:10px; font-size:13px; line-height:1.7;">
+                المقاومة المكافئة (Req): <strong>500.0 Ω</strong><br>
+                التيار الكلي (I): <strong>24.00 mA</strong><br>
+                هبوط الجهد: <strong>V1 = 4.80V | V2 = 7.20V</strong>
+              </div>
+            </div>
+
+            <!-- Lab 3: Digital Logic Gates Interactive Sandbox -->
+            <div class="smoky-glass-panel interactive-module-box" id="logicGatesLab">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px;">
+                <h3 style="font-size: var(--text-lg); color: var(--accent-orange);">🎛️ معمل البوابات المنطقية (Digital Logic)</h3>
+                <span class="status-badge status-badge-valid">نشطة</span>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                <select id="logicGateSelect" style="flex:1; padding:7px; border-radius:8px; background:rgba(21,23,27,0.85); color:#fff; border:1px solid var(--border-glass); font-family:inherit;">
+                  <option value="AND">بوابة AND (و)</option>
+                  <option value="OR">بوابة OR (أو)</option>
+                  <option value="NAND">بوابة NAND (نفي و)</option>
+                  <option value="NOR">بوابة NOR (نفي أو)</option>
+                  <option value="XOR">بوابة XOR (أو الحصرية)</option>
+                  <option value="XNOR">بوابة XNOR</option>
+                  <option value="NOT">بوابة NOT (العاكس — مدخل واحد)</option>
+                </select>
+                <select id="logicInputsCount" style="width:120px; padding:7px; border-radius:8px; background:rgba(21,23,27,0.85); color:#fff; border:1px solid var(--border-glass); font-family:inherit;">
+                  <option value="2">مدخلان (2)</option>
+                  <option value="3">3 مداخل</option>
+                  <option value="4">4 مداخل</option>
+                </select>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; background:rgba(21,23,27,0.45); border-radius:10px;">
+                <div id="logicInputsContainer" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+                <div style="font-size:20px; color:var(--accent-orange); font-weight:800;" id="logicGateBadge">AND</div>
+                <div style="text-align:center;">
+                  <div id="logicOutputLed" class="logic-led-out">0</div>
+                  <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">الخرج (Y)</div>
+                </div>
+              </div>
+              <div id="logicTruthTableWrap" style="max-height:155px; overflow:auto; margin-top:8px;"></div>
+            </div>
+          </div>
+</section>
 
 
         <!-- ==========================================================
@@ -1397,6 +1641,32 @@
                   <button type="button" class="btn-secondary res-val-btn" data-ohms="100" style="flex:1; padding: 6px 4px; font-size: 12px; border-color: rgba(243,133,148,0.45);">100Ω</button>
                   <button type="button" class="btn-secondary res-val-btn active-res" data-ohms="330" style="flex:1; padding: 6px 4px; font-size: 12px; border-color: var(--accent-orange); background: rgba(255,129,44,0.18);">330Ω</button>
                   <button type="button" class="btn-secondary res-val-btn" data-ohms="1000" style="flex:1; padding: 6px 4px; font-size: 12px;">1kΩ</button>
+                </div>
+              </div>
+
+              <!-- Multisim-style Controls: Voltage, Current Direction, Wire Color & Wire Move -->
+              <div class="meter-card" style="padding: var(--spacing-sm);">
+                <div class="meter-label" style="margin-bottom: 6px;">جهد البطارية (V) واتجاه التيار</div>
+                <div style="display: flex; gap: 5px; margin-bottom: 6px;" id="voltageValueGroup">
+                  <button type="button" class="btn-secondary volt-val-btn" data-volts="3" style="flex:1; padding:5px 2px; font-size:11px;">3V</button>
+                  <button type="button" class="btn-secondary volt-val-btn" data-volts="5" style="flex:1; padding:5px 2px; font-size:11px; border-color:var(--accent-orange); background:rgba(255,129,44,0.18);">5V</button>
+                  <button type="button" class="btn-secondary volt-val-btn" data-volts="9" style="flex:1; padding:5px 2px; font-size:11px;">9V</button>
+                  <button type="button" class="btn-secondary volt-val-btn" data-volts="12" style="flex:1; padding:5px 2px; font-size:11px;">12V</button>
+                </div>
+                <div style="display:flex; gap:5px; align-items:center;">
+                  <button type="button" id="btnCurrentDir" class="btn-secondary" style="flex:1; padding:5px 6px; font-size:11px;">↻ التيار: مع العقارب</button>
+                  <select id="wireColorSelect" aria-label="لون السلك" style="padding:5px; font-size:11px; border-radius:6px; background:rgba(21,23,27,0.85); color:#fff; border:1px solid var(--border-glass);">
+                    <option value="#FF812C">سلك برتقالي</option>
+                    <option value="#FF4D4F">سلك أحمر (+)</option>
+                    <option value="#38BDF8">سلك أزرق</option>
+                    <option value="#4ADE80">سلك أخضر</option>
+                    <option value="#CBD5E1">سلك رمادي (-)</option>
+                  </select>
+                </div>
+                <div style="display:flex; gap:5px; margin-top:6px; align-items:center;">
+                  <span style="font-size:11px; color:var(--text-muted); flex:1;">تحريك السلك المحدد:</span>
+                  <button type="button" id="btnWireNudgeUp" class="btn-secondary" style="padding:4px 8px; font-size:11px;" title="رفع مسار السلك">↑</button>
+                  <button type="button" id="btnWireNudgeDown" class="btn-secondary" style="padding:4px 8px; font-size:11px;" title="خفض مسار السلك">↓</button>
                 </div>
               </div>
 
@@ -2531,6 +2801,293 @@
         }
       });
     });
+
+    /* ==============================================================
+       7. MAMAL AI v2.0 INTERACTIVE FEATURES
+       ============================================================== */
+    let currentFlowDirection = 'cw';
+    let selectedWireId = null;
+    const wireOffsets = new Map();
+    const wireColors = new Map();
+    let currentLang = 'ar';
+
+    document.getElementById('btnToggleTheme')?.addEventListener('click', () => {
+      const isLight = document.body.classList.toggle('theme-light');
+      const btn = document.getElementById('btnToggleTheme');
+      if (btn) btn.textContent = isLight ? (currentLang === 'ar' ? '🌙 داكن' : '🌙 Dark') : (currentLang === 'ar' ? '☀️ فاتح' : '☀️ Light');
+    });
+
+    const i18nMap = {
+      ar: {
+        dir: 'rtl', langBtn: '🌐 EN',
+        navHome: 'الرئيسية', navExp: 'التجارب الهندسية', navLab: 'المختبر التفاعلي', navGuide: 'دليل الاستخدام', navAbout: 'عن المشروع',
+        heroNew: '➕ إنشاء تجربة جديدة', heroExp: '🧪 تجارب جاهزة', heroGuide: '📖 دليل الاستخدام',
+        headerLab: '⚡ المختبر', fbBtn: '💬 اقتراح'
+      },
+      en: {
+        dir: 'ltr', langBtn: '🌐 عربي',
+        navHome: 'Home', navExp: 'Experiments', navLab: 'Interactive Lab', navGuide: 'User Guide', navAbout: 'About',
+        heroNew: '➕ New Experiment', heroExp: '🧪 Ready Labs', heroGuide: '📖 User Guide',
+        headerLab: '⚡ Lab', fbBtn: '💬 Feedback'
+      }
+    };
+    document.getElementById('btnToggleLang')?.addEventListener('click', () => {
+      currentLang = currentLang === 'ar' ? 'en' : 'ar';
+      const t = i18nMap[currentLang];
+      document.documentElement.setAttribute('dir', t.dir);
+      document.documentElement.setAttribute('lang', currentLang);
+      const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+      setTxt('btnToggleLang', t.langBtn);
+      setTxt('btnHeroGoLab', t.heroNew);
+      setTxt('btnHeroGoExperiments', t.heroExp);
+      setTxt('btnHeroGoGuide', t.heroGuide);
+      setTxt('btnHeaderLaunchLab', t.headerLab);
+      setTxt('btnOpenFeedback', t.fbBtn);
+      [
+        ['navLinkHome', t.navHome], ['navLinkExperiments', t.navExp],
+        ['navLinkLab', t.navLab], ['navLinkGuide', t.navGuide], ['navLinkAbout', t.navAbout]
+      ].forEach(([id, txt]) => {
+        const lbl = document.querySelector(`#${id} .nav-label`);
+        if (lbl) lbl.textContent = txt;
+      });
+    });
+
+    const fbModal = document.getElementById('feedbackModal');
+    document.getElementById('btnOpenFeedback')?.addEventListener('click', () => fbModal?.classList.add('open'));
+    document.getElementById('btnCloseFeedback')?.addEventListener('click', () => fbModal?.classList.remove('open'));
+    fbModal?.addEventListener('click', (e) => { if (e.target === fbModal) fbModal.classList.remove('open'); });
+    document.getElementById('feedbackForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const msgEl = document.getElementById('fbMessage');
+      const statusEl = document.getElementById('fbStatus');
+      const items = JSON.parse(localStorage.getItem('mamal_ai_feedback') || '[]');
+      items.push({ type: document.getElementById('fbType')?.value, message: msgEl?.value, date: new Date().toISOString() });
+      localStorage.setItem('mamal_ai_feedback', JSON.stringify(items));
+      if (msgEl) msgEl.value = '';
+      if (statusEl) {
+        statusEl.textContent = 'شكراً لك! تم حفظ ملاحظتك بنجاح لتطوير معمل AI.';
+        statusEl.style.display = 'block';
+        setTimeout(() => { statusEl.style.display = 'none'; fbModal?.classList.remove('open'); }, 1500);
+      }
+    });
+
+    document.querySelectorAll('.volt-val-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const volts = Number(btn.getAttribute('data-volts'));
+        if (!Number.isFinite(volts)) return;
+        document.querySelectorAll('.volt-val-btn').forEach(b => { b.style.borderColor = ''; b.style.background = ''; });
+        btn.style.borderColor = 'var(--accent-orange)';
+        btn.style.background = 'rgba(255,129,44,0.18)';
+        const batComp = labState.components.find(c => c.kind === 'dc_source');
+        if (batComp) {
+          batComp.voltageV = volts;
+          batComp.name = `بطارية (${volts}V)`;
+          labState.revision += 1;
+          render();
+        }
+      });
+    });
+
+    function syncWireEnhancements() {
+      const wiresLayer = document.getElementById('wiresLayer');
+      if (!wiresLayer) return;
+      wiresLayer.querySelectorAll('.wire-flow-overlay').forEach(el => el.remove());
+
+      const snapshot = toLabSnapshot(labState);
+      const isValid = labState.components.length > 0 && simulate(snapshot).status === 'valid';
+
+      wiresLayer.querySelectorAll('.wire-path').forEach(path => {
+        const wId = path.getAttribute('data-wire-id');
+        if (!wId) return;
+
+        const c = wireColors.get(wId);
+        if (c) path.style.stroke = c;
+
+        const dy = wireOffsets.get(wId) || 0;
+        if (dy !== 0) {
+          path.setAttribute('transform', `translate(0, ${dy})`);
+        } else {
+          path.removeAttribute('transform');
+        }
+
+        path.classList.toggle('wire-selected', wId === selectedWireId);
+
+        if (!path.dataset.v2Bound) {
+          path.dataset.v2Bound = '1';
+          path.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectedWireId = wId;
+            const chosenColor = document.getElementById('wireColorSelect')?.value;
+            if (chosenColor) wireColors.set(wId, chosenColor);
+            syncWireEnhancements();
+          });
+        }
+
+        if (isValid) {
+          const d = path.getAttribute('d');
+          if (d) {
+            const flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            flow.setAttribute('d', d);
+            if (dy !== 0) flow.setAttribute('transform', `translate(0, ${dy})`);
+            flow.setAttribute('class', `wire-flow-overlay ${currentFlowDirection === 'cw' ? 'wire-flow-cw' : 'wire-flow-ccw'}`);
+            wiresLayer.appendChild(flow);
+          }
+        }
+      });
+    }
+
+    const wiresObserverTarget = document.getElementById('wiresLayer');
+    if (wiresObserverTarget && typeof MutationObserver !== 'undefined') {
+      const obs = new MutationObserver(() => {
+        requestAnimationFrame(syncWireEnhancements);
+      });
+      obs.observe(wiresObserverTarget, { childList: true, attributes: true, subtree: true, attributeFilter: ['d'] });
+    }
+
+    document.getElementById('btnCurrentDir')?.addEventListener('click', () => {
+      currentFlowDirection = currentFlowDirection === 'cw' ? 'ccw' : 'cw';
+      const btn = document.getElementById('btnCurrentDir');
+      if (btn) btn.textContent = currentFlowDirection === 'cw' ? '↻ التيار: مع العقارب' : '↺ التيار: عكس العقارب';
+      syncWireEnhancements();
+    });
+
+    document.getElementById('wireColorSelect')?.addEventListener('change', (e) => {
+      if (selectedWireId) {
+        wireColors.set(selectedWireId, e.target.value);
+        syncWireEnhancements();
+      }
+    });
+
+    function nudgeSelectedWire(delta) {
+      const targetId = selectedWireId || labState.wires[labState.wires.length - 1]?.id;
+      if (!targetId) return;
+      selectedWireId = targetId;
+      wireOffsets.set(targetId, (wireOffsets.get(targetId) || 0) + delta);
+      syncWireEnhancements();
+    }
+    document.getElementById('btnWireNudgeUp')?.addEventListener('click', () => nudgeSelectedWire(-14));
+    document.getElementById('btnWireNudgeDown')?.addEventListener('click', () => nudgeSelectedWire(14));
+
+    let spMode = 'series';
+    function updateSeriesParallel() {
+      const V = Math.max(0.1, Number(document.getElementById('spV')?.value) || 12);
+      const R1 = Math.max(1, Number(document.getElementById('spR1')?.value) || 200);
+      const R2 = Math.max(1, Number(document.getElementById('spR2')?.value) || 300);
+      const box = document.getElementById('spResultsBox');
+      if (!box) return;
+      if (spMode === 'series') {
+        const req = R1 + R2;
+        const I = V / req;
+        const v1 = I * R1, v2 = I * R2;
+        box.innerHTML = `المقاومة المكافئة (R<sub>eq</sub>): <strong>${req.toFixed(1)} Ω</strong><br>التيار الكلي (I): <strong>${(I * 1000).toFixed(2)} mA</strong> (متساوٍ في المقاومتين)<br>هبوط الجهد: <strong>V1 = ${v1.toFixed(2)}V | V2 = ${v2.toFixed(2)}V</strong>`;
+      } else {
+        const req = (R1 * R2) / (R1 + R2);
+        const I = V / req;
+        const i1 = V / R1, i2 = V / R2;
+        box.innerHTML = `المقاومة المكافئة (R<sub>eq</sub>): <strong>${req.toFixed(1)} Ω</strong><br>التيار الكلي (I): <strong>${(I * 1000).toFixed(2)} mA</strong><br>تيار الفروع: <strong>I1 = ${(i1 * 1000).toFixed(2)} mA | I2 = ${(i2 * 1000).toFixed(2)} mA</strong> (الجهد ${V}V متساوٍ)`;
+      }
+    }
+    document.querySelectorAll('.sp-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        spMode = btn.getAttribute('data-mode') || 'series';
+        document.querySelectorAll('.sp-mode-btn').forEach(b => { b.className = 'btn-secondary sp-mode-btn'; });
+        btn.className = 'btn-primary sp-mode-btn';
+        updateSeriesParallel();
+      });
+    });
+    ['spV', 'spR1', 'spR2'].forEach(id => document.getElementById(id)?.addEventListener('input', updateSeriesParallel));
+    updateSeriesParallel();
+
+    let logicInputs = [0, 0, 0, 0];
+    function evalGate(gate, bits) {
+      if (gate === 'NOT') return bits[0] ? 0 : 1;
+      const sum = bits.reduce((a, b) => a + b, 0);
+      if (gate === 'AND') return sum === bits.length ? 1 : 0;
+      if (gate === 'OR') return sum > 0 ? 1 : 0;
+      if (gate === 'NAND') return sum === bits.length ? 0 : 1;
+      if (gate === 'NOR') return sum > 0 ? 0 : 1;
+      if (gate === 'XOR') return sum % 2 === 1 ? 1 : 0;
+      if (gate === 'XNOR') return sum % 2 === 0 ? 1 : 0;
+      return 0;
+    }
+    function renderLogicLab() {
+      const gate = document.getElementById('logicGateSelect')?.value || 'AND';
+      const countSel = document.getElementById('logicInputsCount');
+      const n = gate === 'NOT' ? 1 : Number(countSel?.value || 2);
+      if (countSel) countSel.disabled = gate === 'NOT';
+
+      const container = document.getElementById('logicInputsContainer');
+      const badge = document.getElementById('logicGateBadge');
+      const led = document.getElementById('logicOutputLed');
+      const tblWrap = document.getElementById('logicTruthTableWrap');
+      if (!container || !badge || !led || !tblWrap) return;
+
+      badge.textContent = gate;
+      container.innerHTML = '';
+      const labels = ['A', 'B', 'C', 'D'];
+      const activeBits = logicInputs.slice(0, n);
+
+      for (let i = 0; i < n; i++) {
+        const wrap = document.createElement('div');
+        wrap.style.textAlign = 'center';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `logic-input-btn ${activeBits[i] ? 'is-high' : ''}`;
+        btn.textContent = String(activeBits[i]);
+        btn.addEventListener('click', () => {
+          logicInputs[i] = logicInputs[i] ? 0 : 1;
+          renderLogicLab();
+        });
+        const lbl = document.createElement('div');
+        lbl.style.fontSize = '11px';
+        lbl.style.color = 'var(--text-muted)';
+        lbl.textContent = labels[i];
+        wrap.appendChild(btn);
+        wrap.appendChild(lbl);
+        container.appendChild(wrap);
+      }
+
+      const out = evalGate(gate, activeBits);
+      led.textContent = String(out);
+      led.classList.toggle('is-on', out === 1);
+
+      const rows = 1 << n;
+      let tbl = '<table class="truth-table"><thead><tr>';
+      for (let i = 0; i < n; i++) tbl += `<th>${labels[i]}</th>`;
+      tbl += '<th>Y (الخرج)</th></tr></thead><tbody>';
+      for (let r = 0; r < rows; r++) {
+        const rowBits = [];
+        for (let i = 0; i < n; i++) rowBits.push((r >> (n - 1 - i)) & 1);
+        const y = evalGate(gate, rowBits);
+        const isCurrent = rowBits.every((b, idx) => b === activeBits[idx]);
+        tbl += `<tr class="${isCurrent ? 'active-row' : ''}">` + rowBits.map(b => `<td>${b}</td>`).join('') + `<td><strong>${y}</strong></td></tr>`;
+      }
+      tbl += '</tbody></table>';
+      tblWrap.innerHTML = tbl;
+    }
+    document.getElementById('logicGateSelect')?.addEventListener('change', renderLogicLab);
+    document.getElementById('logicInputsCount')?.addEventListener('change', renderLogicLab);
+    renderLogicLab();
   </script>
+
+  <!-- Feedback / Suggestion Modal -->
+  <div class="modal-overlay" id="feedbackModal" role="dialog" aria-modal="true" aria-label="تقديم اقتراح أو ملاحظة">
+    <div class="smoky-glass-panel modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="font-size:16px; color:var(--accent-orange);">💬 اقتراح أو ملاحظة لتطوير معمل AI</h3>
+        <button type="button" id="btnCloseFeedback" class="header-mini-btn">✕</button>
+      </div>
+      <form id="feedbackForm" style="display:flex; flex-direction:column; gap:10px;">
+        <select id="fbType" style="padding:8px; border-radius:8px; background:rgba(21,23,27,0.85); color:#fff; border:1px solid var(--border-glass); font-family:inherit;">
+          <option value="suggestion">اقتراح ميزة جديدة</option>
+          <option value="bug">الإبلاغ عن مشكلة</option>
+          <option value="experiment">طلب تجربة هندسية</option>
+        </select>
+        <textarea id="fbMessage" rows="4" required placeholder="اكتب اقتراحك أو ملاحظتك هنا..." style="padding:10px; border-radius:8px; background:rgba(21,23,27,0.85); color:#fff; border:1px solid var(--border-glass); font-family:inherit; resize:vertical;"></textarea>
+        <button type="submit" class="btn-primary" style="padding:9px;">إرسال الملاحظة</button>
+        <div id="fbStatus" style="font-size:12px; color:#7EE787; display:none;"></div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>
