@@ -1,420 +1,230 @@
 /**
- * Mamal AI v3.0 - Ready-made Engineering Experiment Presets & Component Catalog
- * Organized into Electricity (الكهرباء) and Electronics (الإلكترونيات).
+ * Mamal AI v3.1 - Multisim-Inspired Component Library (Groups, Families, ANSI/IEC Symbols)
  */
 
+export const COMPONENT_GROUPS = [
+  { id: 'all', icon: 'All', labelAr: 'كل المجموعات', labelEn: '<All groups>' },
+  { id: 'sources', icon: '⚡', labelAr: 'المصادر (Sources)', labelEn: 'Sources' },
+  { id: 'basic', icon: '♒', labelAr: 'الأساسيات (Basic)', labelEn: 'Basic' },
+  { id: 'diodes', icon: '▷|', labelAr: 'الثنائيات والضوئيات (Diodes)', labelEn: 'Diodes & LEDs' },
+  { id: 'indicators', icon: '🔆', labelAr: 'المؤشرات والأحمال (Indicators)', labelEn: 'Indicators' },
+];
+
 export const COMPONENT_CATALOG = [
-  // Sources
+  // SOURCES
   {
-    category: 'sources',
-    kind: 'dc_source',
-    icon: '🔋',
-    labelAr: 'مصدر جهد DC',
-    labelEn: 'DC Voltage Source',
-    defaultLabelAr: 'بطارية (5V)',
-    defaultLabelEn: 'DC Source (5V)',
-    btnId: 'btnAddBattery',
+    group: 'sources', familyAr: 'مصادر القدرة', familyEn: 'POWER_SOURCES',
+    code: 'DC_POWER', kind: 'dc_source', icon: '🔋', btnId: 'btnAddBattery',
+    labelAr: 'مصدر جهد مستمر ثابت (DC_POWER)', labelEn: 'DC Voltage Source (DC_POWER)',
+    descAr: 'مصدر فرق جهد مستمر قابل لضبط القيمة من 0V حتى أي جهد مطلوب.',
+    descEn: 'Fixed/editable DC voltage source configurable to any voltage.',
     defaults: { voltageV: 5.0 },
-    ports: [
-      { suffix: 'pos', role: 'positive', label: '+' },
-      { suffix: 'neg', role: 'negative', label: '-' },
-    ],
+    ports: [{ suffix: 'pos', role: 'positive', label: '+' }, { suffix: 'neg', role: 'negative', label: '-' }],
   },
   {
-    category: 'sources',
-    kind: 'ac_source',
-    icon: '〰️',
-    labelAr: 'مصدر جهد AC',
-    labelEn: 'AC Voltage Source',
-    defaultLabelAr: 'مصدر AC (12V)',
-    defaultLabelEn: 'AC Source (12V)',
-    btnId: 'btnAddAcSource',
+    group: 'sources', familyAr: 'مصادر متغيرة', familyEn: 'INTERACTIVE_SOURCES',
+    code: 'DC_INTERACTIVE_VOLTAGE', kind: 'dc_source', icon: '🎚️',
+    labelAr: 'مصدر جهد مستمر متغير (DC_INTERACTIVE)', labelEn: 'Variable DC Source (DC_INTERACTIVE)',
+    descAr: 'مصدر جهد DC تفاعلي متغير القيمة للتجارب المعملية.',
+    descEn: 'Interactive variable DC voltage supply for lab sweeps.',
+    defaults: { voltageV: 9.0, isVariable: true },
+    ports: [{ suffix: 'pos', role: 'positive', label: '+' }, { suffix: 'neg', role: 'negative', label: '-' }],
+  },
+  {
+    group: 'sources', familyAr: 'مصادر مترددة', familyEn: 'SIGNAL_VOLTAGE_SOURCES',
+    code: 'AC_VOLTAGE', kind: 'ac_source', icon: '〰️',
+    labelAr: 'مصدر جهد متردد (AC_VOLTAGE)', labelEn: 'AC Voltage Source (AC_VOLTAGE)',
+    descAr: 'مصدر تيار متردد (جيبي) قابل لتعديل الجهد والتردد.',
+    descEn: 'Sinusoidal AC voltage source with configurable RMS voltage.',
     defaults: { voltageV: 12.0, frequencyHz: 50 },
-    ports: [
-      { suffix: 'pos', role: 'positive', label: '~+' },
-      { suffix: 'neg', role: 'negative', label: '~-' },
-    ],
+    ports: [{ suffix: 'pos', role: 'positive', label: '~+' }, { suffix: 'neg', role: 'negative', label: '~-' }],
   },
   {
-    category: 'sources',
-    kind: 'current_source',
-    icon: '⚡',
-    labelAr: 'مصدر تيار',
-    labelEn: 'Current Source',
-    defaultLabelAr: 'مصدر تيار (20mA)',
-    defaultLabelEn: 'Current Src (20mA)',
-    btnId: 'btnAddCurrentSource',
+    group: 'sources', familyAr: 'مصادر التيار', familyEn: 'SIGNAL_CURRENT_SOURCES',
+    code: 'DC_CURRENT', kind: 'current_source', icon: '⬆️',
+    labelAr: 'مصدر تيار ثابت / متغير (DC_CURRENT)', labelEn: 'DC Current Source (DC_CURRENT)',
+    descAr: 'مصدر تيار كهربائي ثابت أو متغير الشدة بالأمبير والملي أمبير.',
+    descEn: 'Configurable constant/variable DC current source.',
     defaults: { currentA: 0.02 },
-    ports: [
-      { suffix: 'pos', role: 'positive', label: 'I+' },
-      { suffix: 'neg', role: 'negative', label: 'I-' },
-    ],
+    ports: [{ suffix: 'pos', role: 'positive', label: 'I+' }, { suffix: 'neg', role: 'negative', label: 'I-' }],
   },
-  // Basic
+  // BASIC
   {
-    category: 'basic',
-    kind: 'resistor',
-    icon: '♒',
-    labelAr: 'مقاومة ثابتة',
-    labelEn: 'Fixed Resistor',
-    defaultLabelAr: 'مقاومة (330Ω)',
-    defaultLabelEn: 'Resistor (330Ω)',
-    btnId: 'btnAddResistor',
+    group: 'basic', familyAr: 'المقاومات', familyEn: 'RESISTOR',
+    code: 'RESISTOR', kind: 'resistor', icon: '♒', btnId: 'btnAddResistor',
+    labelAr: 'مقاومة ثابتة (RESISTOR)', labelEn: 'Fixed Resistor (RESISTOR)',
+    descAr: 'مقاومة كهربائية خطية تحد من التيار؛ انقر نقرتين لضبط أي قيمة بالأوم.',
+    descEn: 'Linear fixed resistor; double-click to set any value in Ohms.',
     defaults: { resistanceOhms: 330.0 },
-    ports: [
-      { suffix: 'a', role: 'terminal_a', label: '1' },
-      { suffix: 'b', role: 'terminal_b', label: '2' },
-    ],
+    ports: [{ suffix: 'a', role: 'terminal_a', label: '1' }, { suffix: 'b', role: 'terminal_b', label: '2' }],
   },
   {
-    category: 'basic',
-    kind: 'potentiometer',
-    icon: '🎛️',
-    labelAr: 'مقاومة متغيرة',
-    labelEn: 'Variable Resistor',
-    defaultLabelAr: 'متغيرة (500Ω)',
-    defaultLabelEn: 'Potentiometer (500Ω)',
-    btnId: 'btnAddPotentiometer',
-    defaults: { resistanceOhms: 500.0, maxResistanceOhms: 2000.0 },
-    ports: [
-      { suffix: 'a', role: 'terminal_a', label: '1' },
-      { suffix: 'b', role: 'terminal_b', label: '2' },
-    ],
+    group: 'basic', familyAr: 'المقاومات المتغيرة', familyEn: 'POTENTIOMETER',
+    code: 'POTENTIOMETER', kind: 'potentiometer', icon: '🎛️',
+    labelAr: 'مقاومة متغيرة (POTENTIOMETER)', labelEn: 'Variable Resistor (POTENTIOMETER)',
+    descAr: 'مقاومة متغيرة للتحكم السلس في التيار وهبوط الجهد.',
+    descEn: 'Variable resistor / potentiometer for continuous current control.',
+    defaults: { resistanceOhms: 500.0, maxResistanceOhms: 5000.0 },
+    ports: [{ suffix: 'a', role: 'terminal_a', label: '1' }, { suffix: 'b', role: 'terminal_b', label: '2' }],
   },
   {
-    category: 'basic',
-    kind: 'capacitor',
-    icon: '🔋',
-    labelAr: 'مكثف (Capacitor)',
-    labelEn: 'Capacitor',
-    defaultLabelAr: 'مكثف (100µF)',
-    defaultLabelEn: 'Capacitor (100µF)',
-    btnId: 'btnAddCapacitor',
+    group: 'basic', familyAr: 'المكثفات', familyEn: 'CAPACITOR',
+    code: 'CAPACITOR', kind: 'capacitor', icon: '┤├',
+    labelAr: 'مكثف (CAPACITOR)', labelEn: 'Capacitor (CAPACITOR)',
+    descAr: 'مكثف كهربائي لتخزين الشحنة الكهربائية (بالميكروفاراد µF).',
+    descEn: 'Electrical capacitor storing charge (configurable in µF).',
     defaults: { capacitanceUf: 100.0 },
-    ports: [
-      { suffix: 'a', role: 'terminal_a', label: '+' },
-      { suffix: 'b', role: 'terminal_b', label: '-' },
-    ],
+    ports: [{ suffix: 'a', role: 'terminal_a', label: '+' }, { suffix: 'b', role: 'terminal_b', label: '-' }],
   },
   {
-    category: 'basic',
-    kind: 'inductor',
-    icon: '🌀',
-    labelAr: 'ملف / محث',
-    labelEn: 'Inductor (Coil)',
-    defaultLabelAr: 'ملف (10mH)',
-    defaultLabelEn: 'Inductor (10mH)',
-    btnId: 'btnAddInductor',
+    group: 'basic', familyAr: 'الملفات والمحثات', familyEn: 'INDUCTOR',
+    code: 'INDUCTOR', kind: 'inductor', icon: '🌀',
+    labelAr: 'ملف / محث (INDUCTOR)', labelEn: 'Inductor / Coil (INDUCTOR)',
+    descAr: 'ملف حث كهرومغناطيسي (بالملي هنري mH).',
+    descEn: 'Electromagnetic inductor coil (configurable in mH).',
     defaults: { inductanceMh: 10.0 },
-    ports: [
-      { suffix: 'a', role: 'terminal_a', label: '1' },
-      { suffix: 'b', role: 'terminal_b', label: '2' },
-    ],
-  },
-  // Optics & Control
-  {
-    category: 'control',
-    kind: 'led',
-    icon: '💡',
-    labelAr: 'صمام ضوئي LED',
-    labelEn: 'LED Diode',
-    defaultLabelAr: 'صمام LED',
-    defaultLabelEn: 'Red LED',
-    btnId: 'btnAddLed',
-    defaults: { forwardVoltageV: 2.0, maxCurrentA: 0.02 },
-    ports: [
-      { suffix: 'anode', role: 'anode', label: 'A' },
-      { suffix: 'cathode', role: 'cathode', label: 'K' },
-    ],
+    ports: [{ suffix: 'a', role: 'terminal_a', label: '1' }, { suffix: 'b', role: 'terminal_b', label: '2' }],
   },
   {
-    category: 'control',
-    kind: 'switch',
-    icon: '🔘',
-    labelAr: 'مفتاح كهربائي',
-    labelEn: 'SPST Switch',
-    defaultLabelAr: 'مفتاح تشغيل',
-    defaultLabelEn: 'Switch (SPST)',
-    btnId: 'btnAddSwitch',
+    group: 'basic', familyAr: 'المفاتيح', familyEn: 'SWITCH',
+    code: 'SPST_SWITCH', kind: 'switch', icon: '🔘', btnId: 'btnAddSwitch',
+    labelAr: 'مفتاح كهربائي (SPST_SWITCH)', labelEn: 'SPST Toggle Switch (SPST)',
+    descAr: 'مفتاح فتح وإغلاق مستقل؛ انقر مباشرة على جسمه لتبديل حالته.',
+    descEn: 'Independent toggle switch; click directly on its body to open/close.',
     defaults: { isOpen: false },
-    ports: [
-      { suffix: 'a', role: 'terminal_a', label: '1' },
-      { suffix: 'b', role: 'terminal_b', label: '2' },
-    ],
+    ports: [{ suffix: 'a', role: 'terminal_a', label: '1' }, { suffix: 'b', role: 'terminal_b', label: '2' }],
+  },
+  // DIODES & LEDS
+  {
+    group: 'diodes', familyAr: 'الصمامات الضوئية', familyEn: 'LED',
+    code: 'LED_RED', kind: 'led', icon: '💡', btnId: 'btnAddLed',
+    labelAr: 'صمام ضوئي (LED — متعدد الألوان)', labelEn: 'Light Emitting Diode (LED)',
+    descAr: 'صمام باعث للضوء قابل لاختيار اللون (أحمر/أخضر/أزرق/أصفر) والجهد الأمامي.',
+    descEn: 'LED with selectable color (Red/Green/Blue/Yellow) and forward voltage.',
+    defaults: { forwardVoltageV: 2.0, maxCurrentA: 0.02, ledColor: '#FF4D4F' },
+    ports: [{ suffix: 'anode', role: 'anode', label: 'A' }, { suffix: 'cathode', role: 'cathode', label: 'K' }],
   },
   {
-    category: 'control',
-    kind: 'lamp',
-    icon: '🔆',
-    labelAr: 'مصباح حمل',
-    labelEn: 'Incandescent Lamp',
-    defaultLabelAr: 'مصباح (100Ω)',
-    defaultLabelEn: 'Lamp (100Ω)',
-    btnId: 'btnAddLamp',
-    defaults: { resistanceOhms: 100.0 },
-    ports: [
-      { suffix: 'a', role: 'terminal_a', label: '1' },
-      { suffix: 'b', role: 'terminal_b', label: '2' },
-    ],
-  },
-  {
-    category: 'control',
-    kind: 'diode',
-    icon: '▶️',
-    labelAr: 'دايود (Diode)',
-    labelEn: 'Rectifier Diode',
-    defaultLabelAr: 'دايود 1N4007',
-    defaultLabelEn: 'Diode 1N4007',
-    btnId: 'btnAddDiode',
+    group: 'diodes', familyAr: 'الثنائيات', familyEn: 'DIODE',
+    code: 'DIODE_1N4007', kind: 'diode', icon: '▷|',
+    labelAr: 'دايود مقوّم (1N4007)', labelEn: 'Rectifier Diode (1N4007)',
+    descAr: 'ثنائي سيليكوني يسمح بمرور التيار في اتجاه واحد (Vf ≈ 0.7V).',
+    descEn: 'Silicon rectifier diode conducting in one direction (Vf ≈ 0.7V).',
     defaults: { forwardVoltageV: 0.7 },
-    ports: [
-      { suffix: 'anode', role: 'anode', label: 'A' },
-      { suffix: 'cathode', role: 'cathode', label: 'K' },
-    ],
+    ports: [{ suffix: 'anode', role: 'anode', label: 'A' }, { suffix: 'cathode', role: 'cathode', label: 'K' }],
+  },
+  // INDICATORS
+  {
+    group: 'indicators', familyAr: 'المصابيح والأحمال', familyEn: 'LAMP',
+    code: 'LAMP_100', kind: 'lamp', icon: '🔆',
+    labelAr: 'مصباح حمل (LAMP)', labelEn: 'Incandescent Lamp (LAMP)',
+    descAr: 'مصباح حمل كهربائي يضيء عند مرور التيار (مقاومة قابلة للتعديل).',
+    descEn: 'Resistive incandescent lamp indicator with editable resistance.',
+    defaults: { resistanceOhms: 100.0 },
+    ports: [{ suffix: 'a', role: 'terminal_a', label: '1' }, { suffix: 'b', role: 'terminal_b', label: '2' }],
   },
 ];
 
-export const EXPERIMENT_PRESETS = {
-  'ohms-law-led': {
-    id: 'ohms-law-led',
-    category: 'electronics',
-    titleAr: 'قانون أوم وحماية صمام LED',
-    titleEn: "Ohm's Law & LED Protection",
-    components: [
-      {
-        id: 'bat-1', kind: 'dc_source', name: 'بطارية (5V)', position: { x: 60, y: 200 }, rotation: 0, voltageV: 5.0,
-        ports: [
-          { id: 'p_bat_pos', componentId: 'bat-1', role: 'positive', label: '+' },
-          { id: 'p_bat_neg', componentId: 'bat-1', role: 'negative', label: '-' },
-        ],
-      },
-      {
-        id: 'res-1', kind: 'resistor', name: 'مقاومة (330Ω)', position: { x: 260, y: 90 }, rotation: 0, resistanceOhms: 330.0,
-        ports: [
-          { id: 'p_res_a', componentId: 'res-1', role: 'terminal_a', label: '1' },
-          { id: 'p_res_b', componentId: 'res-1', role: 'terminal_b', label: '2' },
-        ],
-      },
-      {
-        id: 'led-1', kind: 'led', name: 'صمام LED', position: { x: 520, y: 200 }, rotation: 0, forwardVoltageV: 2.0, maxCurrentA: 0.02,
-        ports: [
-          { id: 'p_led_anode', componentId: 'led-1', role: 'anode', label: 'A' },
-          { id: 'p_led_cathode', componentId: 'led-1', role: 'cathode', label: 'K' },
-        ],
-      },
-      {
-        id: 'sw-1', kind: 'switch', name: 'مفتاح تشغيل', position: { x: 260, y: 340 }, rotation: 0, isOpen: false,
-        ports: [
-          { id: 'p_sw_a', componentId: 'sw-1', role: 'terminal_a', label: '1' },
-          { id: 'p_sw_b', componentId: 'sw-1', role: 'terminal_b', label: '2' },
-        ],
-      },
-    ],
-    wires: [
-      { id: 'w1', fromPortId: 'p_bat_pos', toPortId: 'p_res_a' },
-      { id: 'w2', fromPortId: 'p_res_b', toPortId: 'p_led_anode' },
-      { id: 'w3', fromPortId: 'p_led_cathode', toPortId: 'p_sw_b' },
-      { id: 'w4', fromPortId: 'p_sw_a', toPortId: 'p_bat_neg' },
-    ],
-  },
-
-  'series-resistors': {
-    id: 'series-resistors',
-    category: 'electricity',
-    titleAr: 'توصيل المقاومات على التوالي (مجزئ الجهد)',
-    titleEn: 'Series Resistors (Voltage Divider)',
-    components: [
-      {
-        id: 'bat-s1', kind: 'dc_source', name: 'مصدر (12V)', position: { x: 60, y: 200 }, rotation: 0, voltageV: 12.0,
-        ports: [
-          { id: 'p_bs_pos', componentId: 'bat-s1', role: 'positive', label: '+' },
-          { id: 'p_bs_neg', componentId: 'bat-s1', role: 'negative', label: '-' },
-        ],
-      },
-      {
-        id: 'res-s1', kind: 'resistor', name: 'R1 (200Ω)', position: { x: 260, y: 90 }, rotation: 0, resistanceOhms: 200.0,
-        ports: [
-          { id: 'p_rs1_a', componentId: 'res-s1', role: 'terminal_a', label: '1' },
-          { id: 'p_rs1_b', componentId: 'res-s1', role: 'terminal_b', label: '2' },
-        ],
-      },
-      {
-        id: 'res-s2', kind: 'resistor', name: 'R2 (400Ω)', position: { x: 520, y: 200 }, rotation: 0, resistanceOhms: 400.0,
-        ports: [
-          { id: 'p_rs2_a', componentId: 'res-s2', role: 'terminal_a', label: '1' },
-          { id: 'p_rs2_b', componentId: 'res-s2', role: 'terminal_b', label: '2' },
-        ],
-      },
-      {
-        id: 'sw-s1', kind: 'switch', name: 'مفتاح رئيسي', position: { x: 260, y: 340 }, rotation: 0, isOpen: false,
-        ports: [
-          { id: 'p_sws_a', componentId: 'sw-s1', role: 'terminal_a', label: '1' },
-          { id: 'p_sws_b', componentId: 'sw-s1', role: 'terminal_b', label: '2' },
-        ],
-      },
-    ],
-    wires: [
-      { id: 'ws1', fromPortId: 'p_bs_pos', toPortId: 'p_rs1_a' },
-      { id: 'ws2', fromPortId: 'p_rs1_b', toPortId: 'p_rs2_a' },
-      { id: 'ws3', fromPortId: 'p_rs2_b', toPortId: 'p_sws_b' },
-      { id: 'ws4', fromPortId: 'p_sws_a', toPortId: 'p_bs_neg' },
-    ],
-  },
-
-  'kirchhoff-kvl-kcl': {
-    id: 'kirchhoff-kvl-kcl',
-    category: 'electricity',
-    titleAr: 'قوانين كيرشوف للجهد والتيار (KVL / KCL)',
-    titleEn: "Kirchhoff's Laws (KVL / KCL)",
-    components: [
-      {
-        id: 'bat-k1', kind: 'dc_source', name: 'مصدر (10V)', position: { x: 60, y: 200 }, rotation: 0, voltageV: 10.0,
-        ports: [
-          { id: 'p_bk_pos', componentId: 'bat-k1', role: 'positive', label: '+' },
-          { id: 'p_bk_neg', componentId: 'bat-k1', role: 'negative', label: '-' },
-        ],
-      },
-      {
-        id: 'res-k1', kind: 'resistor', name: 'R1 (100Ω)', position: { x: 260, y: 80 }, rotation: 0, resistanceOhms: 100.0,
-        ports: [
-          { id: 'p_rk1_a', componentId: 'res-k1', role: 'terminal_a', label: '1' },
-          { id: 'p_rk1_b', componentId: 'res-k1', role: 'terminal_b', label: '2' },
-        ],
-      },
-      {
-        id: 'res-k2', kind: 'resistor', name: 'R2 (200Ω)', position: { x: 520, y: 120 }, rotation: 0, resistanceOhms: 200.0,
-        ports: [
-          { id: 'p_rk2_a', componentId: 'res-k2', role: 'terminal_a', label: '1' },
-          { id: 'p_rk2_b', componentId: 'res-k2', role: 'terminal_b', label: '2' },
-        ],
-      },
-      {
-        id: 'res-k3', kind: 'resistor', name: 'R3 (200Ω)', position: { x: 520, y: 310 }, rotation: 0, resistanceOhms: 200.0,
-        ports: [
-          { id: 'p_rk3_a', componentId: 'res-k3', role: 'terminal_a', label: '1' },
-          { id: 'p_rk3_b', componentId: 'res-k3', role: 'terminal_b', label: '2' },
-        ],
-      },
-    ],
-    wires: [
-      { id: 'wk1', fromPortId: 'p_bk_pos', toPortId: 'p_rk1_a' },
-      { id: 'wk2', fromPortId: 'p_rk1_b', toPortId: 'p_rk2_a' },
-      { id: 'wk3', fromPortId: 'p_rk1_b', toPortId: 'p_rk3_a' },
-      { id: 'wk4', fromPortId: 'p_rk2_b', toPortId: 'p_bk_neg' },
-      { id: 'wk5', fromPortId: 'p_rk3_b', toPortId: 'p_bk_neg' },
-    ],
-  },
-
-  'ohms-basic': {
-    id: 'ohms-basic',
-    category: 'electricity',
-    titleAr: 'دائرة قانون أوم الأساسية ومصباح الحمل',
-    titleEn: "Basic Ohm's Law & Load Lamp",
-    components: [
-      {
-        id: 'bat-b1', kind: 'dc_source', name: 'مصدر (9V)', position: { x: 70, y: 200 }, rotation: 0, voltageV: 9.0,
-        ports: [
-          { id: 'p_bb_pos', componentId: 'bat-b1', role: 'positive', label: '+' },
-          { id: 'p_bb_neg', componentId: 'bat-b1', role: 'negative', label: '-' },
-        ],
-      },
-      {
-        id: 'lamp-b1', kind: 'lamp', name: 'مصباح (100Ω)', position: { x: 350, y: 110 }, rotation: 0, resistanceOhms: 100.0,
-        ports: [
-          { id: 'p_lb_a', componentId: 'lamp-b1', role: 'terminal_a', label: '1' },
-          { id: 'p_lb_b', componentId: 'lamp-b1', role: 'terminal_b', label: '2' },
-        ],
-      },
-      {
-        id: 'sw-b1', kind: 'switch', name: 'مفتاح الدائرة', position: { x: 350, y: 310 }, rotation: 0, isOpen: false,
-        ports: [
-          { id: 'p_swb_a', componentId: 'sw-b1', role: 'terminal_a', label: '1' },
-          { id: 'p_swb_b', componentId: 'sw-b1', role: 'terminal_b', label: '2' },
-        ],
-      },
-    ],
-    wires: [
-      { id: 'wb1', fromPortId: 'p_bb_pos', toPortId: 'p_lb_a' },
-      { id: 'wb2', fromPortId: 'p_lb_b', toPortId: 'p_swb_b' },
-      { id: 'wb3', fromPortId: 'p_swb_a', toPortId: 'p_bb_neg' },
-    ],
-  },
-
-  'potentiometer-led': {
-    id: 'potentiometer-led',
-    category: 'electronics',
-    titleAr: 'التحكم بشدة التيار بمقاومة متغيرة',
-    titleEn: 'Variable Resistor Current Control',
-    components: [
-      {
-        id: 'bat-p1', kind: 'dc_source', name: 'مصدر (9V)', position: { x: 60, y: 200 }, rotation: 0, voltageV: 9.0,
-        ports: [
-          { id: 'p_bp_pos', componentId: 'bat-p1', role: 'positive', label: '+' },
-          { id: 'p_bp_neg', componentId: 'bat-p1', role: 'negative', label: '-' },
-        ],
-      },
-      {
-        id: 'pot-p1', kind: 'potentiometer', name: 'متغيرة (500Ω)', position: { x: 270, y: 95 }, rotation: 0, resistanceOhms: 500.0, maxResistanceOhms: 2000.0,
-        ports: [
-          { id: 'p_pot_a', componentId: 'pot-p1', role: 'terminal_a', label: '1' },
-          { id: 'p_pot_b', componentId: 'pot-p1', role: 'terminal_b', label: '2' },
-        ],
-      },
-      {
-        id: 'led-p1', kind: 'led', name: 'صمام LED', position: { x: 520, y: 200 }, rotation: 0, forwardVoltageV: 2.0, maxCurrentA: 0.02,
-        ports: [
-          { id: 'p_lp_a', componentId: 'led-p1', role: 'anode', label: 'A' },
-          { id: 'p_lp_k', componentId: 'led-p1', role: 'cathode', label: 'K' },
-        ],
-      },
-      {
-        id: 'sw-p1', kind: 'switch', name: 'مفتاح تشغيل', position: { x: 270, y: 340 }, rotation: 0, isOpen: false,
-        ports: [
-          { id: 'p_swp_a', componentId: 'sw-p1', role: 'terminal_a', label: '1' },
-          { id: 'p_swp_b', componentId: 'sw-p1', role: 'terminal_b', label: '2' },
-        ],
-      },
-    ],
-    wires: [
-      { id: 'wp1', fromPortId: 'p_bp_pos', toPortId: 'p_pot_a' },
-      { id: 'wp2', fromPortId: 'p_pot_b', toPortId: 'p_lp_a' },
-      { id: 'wp3', fromPortId: 'p_lp_k', toPortId: 'p_swp_b' },
-      { id: 'wp4', fromPortId: 'p_swp_a', toPortId: 'p_bp_neg' },
-    ],
-  },
-
-  'rc-circuit': {
-    id: 'rc-circuit',
-    category: 'electronics',
-    titleAr: 'دائرة المقاومة والمكثف (RC Circuit)',
-    titleEn: 'Resistor-Capacitor (RC) Circuit',
-    components: [
-      {
-        id: 'bat-rc', kind: 'dc_source', name: 'مصدر (5V)', position: { x: 60, y: 200 }, rotation: 0, voltageV: 5.0,
-        ports: [
-          { id: 'p_brc_pos', componentId: 'bat-rc', role: 'positive', label: '+' },
-          { id: 'p_brc_neg', componentId: 'bat-rc', role: 'negative', label: '-' },
-        ],
-      },
-      {
-        id: 'res-rc', kind: 'resistor', name: 'مقاومة (1kΩ)', position: { x: 280, y: 100 }, rotation: 0, resistanceOhms: 1000.0,
-        ports: [
-          { id: 'p_rrc_a', componentId: 'res-rc', role: 'terminal_a', label: '1' },
-          { id: 'p_rrc_b', componentId: 'res-rc', role: 'terminal_b', label: '2' },
-        ],
-      },
-      {
-        id: 'cap-rc', kind: 'capacitor', name: 'مكثف (100µF)', position: { x: 520, y: 200 }, rotation: 0, capacitanceUf: 100.0,
-        ports: [
-          { id: 'p_crc_a', componentId: 'cap-rc', role: 'terminal_a', label: '+' },
-          { id: 'p_crc_b', componentId: 'cap-rc', role: 'terminal_b', label: '-' },
-        ],
-      },
-    ],
-    wires: [
-      { id: 'wrc1', fromPortId: 'p_brc_pos', toPortId: 'p_rrc_a' },
-      { id: 'wrc2', fromPortId: 'p_rrc_b', toPortId: 'p_crc_a' },
-      { id: 'wrc3', fromPortId: 'p_crc_b', toPortId: 'p_brc_neg' },
-    ],
-  },
-};
+/**
+ * Generates crisp ANSI/IEC SVG schematic graphics for a component (centered in 120x80 box).
+ */
+export function getSchematicSymbolMarkup(comp, isLit = false) {
+  const stroke = 'currentColor';
+  switch (comp.kind) {
+    case 'dc_source':
+      return `
+        <line x1="12" y1="40" x2="48" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <line x1="48" y1="26" x2="48" y2="54" stroke="${stroke}" stroke-width="2"/>
+        <line x1="58" y1="33" x2="58" y2="47" stroke="${stroke}" stroke-width="3.5"/>
+        <line x1="68" y1="26" x2="68" y2="54" stroke="${stroke}" stroke-width="2"/>
+        <line x1="78" y1="33" x2="78" y2="47" stroke="${stroke}" stroke-width="3.5"/>
+        <line x1="78" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+      `;
+    case 'ac_source':
+      return `
+        <line x1="12" y1="40" x2="42" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <circle cx="60" cy="40" r="18" fill="none" stroke="${stroke}" stroke-width="2"/>
+        <path d="M 49 40 Q 54.5 29 60 40 T 71 40" fill="none" stroke="${stroke}" stroke-width="2"/>
+        <line x1="78" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+      `;
+    case 'current_source':
+      return `
+        <line x1="12" y1="40" x2="42" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <circle cx="60" cy="40" r="18" fill="none" stroke="${stroke}" stroke-width="2"/>
+        <line x1="48" y1="40" x2="70" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <polygon points="73,40 65,35 65,45" fill="${stroke}"/>
+        <line x1="78" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+      `;
+    case 'resistor':
+      return `
+        <line x1="12" y1="40" x2="32" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <polyline points="32,40 37,30 45,50 53,30 61,50 69,30 77,50 83,40" fill="none" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
+        <line x1="83" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+      `;
+    case 'potentiometer':
+      return `
+        <line x1="12" y1="40" x2="32" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <polyline points="32,40 37,30 45,50 53,30 61,50 69,30 77,50 83,40" fill="none" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
+        <line x1="83" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <line x1="42" y1="54" x2="74" y2="24" stroke="#FF812C" stroke-width="2"/>
+        <polygon points="77,21 69,23 74,29" fill="#FF812C"/>
+      `;
+    case 'capacitor':
+      return `
+        <line x1="12" y1="40" x2="53" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <line x1="53" y1="24" x2="53" y2="56" stroke="${stroke}" stroke-width="3"/>
+        <line x1="67" y1="24" x2="67" y2="56" stroke="${stroke}" stroke-width="3"/>
+        <line x1="67" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+      `;
+    case 'inductor':
+      return `
+        <line x1="12" y1="40" x2="30" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <path d="M 30 40 A 7.5 10 0 0 1 45 40 A 7.5 10 0 0 1 60 40 A 7.5 10 0 0 1 75 40 A 7.5 10 0 0 1 90 40" fill="none" stroke="${stroke}" stroke-width="2.2"/>
+        <line x1="90" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+      `;
+    case 'switch':
+      return comp.isOpen
+        ? `
+          <line x1="12" y1="40" x2="40" y2="40" stroke="${stroke}" stroke-width="2"/>
+          <circle cx="42" cy="40" r="3.5" fill="#F59E0B"/>
+          <line x1="44" y1="38" x2="75" y2="23" stroke="#F59E0B" stroke-width="2.8" stroke-linecap="round"/>
+          <circle cx="78" cy="40" r="3.5" fill="${stroke}"/>
+          <line x1="80" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+        `
+        : `
+          <line x1="12" y1="40" x2="40" y2="40" stroke="${stroke}" stroke-width="2"/>
+          <circle cx="42" cy="40" r="3.5" fill="#10B981"/>
+          <line x1="42" y1="40" x2="78" y2="40" stroke="#10B981" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="78" cy="40" r="3.5" fill="#10B981"/>
+          <line x1="80" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+        `;
+    case 'led': {
+      const col = comp.ledColor || '#FF4D4F';
+      return `
+        <line x1="12" y1="40" x2="46" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <polygon points="46,28 46,52 70,40" fill="${isLit ? col : 'none'}" stroke="${col}" stroke-width="2.2"/>
+        <line x1="70" y1="28" x2="70" y2="52" stroke="${col}" stroke-width="2.5"/>
+        <line x1="70" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <line x1="60" y1="24" x2="68" y2="16" stroke="${col}" stroke-width="1.6"/>
+        <line x1="68" y1="26" x2="76" y2="18" stroke="${col}" stroke-width="1.6"/>
+      `;
+    }
+    case 'diode':
+      return `
+        <line x1="12" y1="40" x2="46" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <polygon points="46,28 46,52 70,40" fill="none" stroke="${stroke}" stroke-width="2.2"/>
+        <line x1="70" y1="28" x2="70" y2="52" stroke="${stroke}" stroke-width="2.5"/>
+        <line x1="70" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+      `;
+    case 'lamp':
+      return `
+        <line x1="12" y1="40" x2="44" y2="40" stroke="${stroke}" stroke-width="2"/>
+        <circle cx="60" cy="40" r="16" fill="${isLit ? 'rgba(255, 196, 0, 0.35)' : 'none'}" stroke="${isLit ? '#F59E0B' : stroke}" stroke-width="2.2"/>
+        <line x1="49" y1="29" x2="71" y2="51" stroke="${isLit ? '#F59E0B' : stroke}" stroke-width="2"/>
+        <line x1="71" y1="29" x2="49" y2="51" stroke="${isLit ? '#F59E0B' : stroke}" stroke-width="2"/>
+        <line x1="76" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>
+      `;
+    default:
+      return '';
+  }
+}

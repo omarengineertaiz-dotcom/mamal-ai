@@ -1,8 +1,7 @@
 /**
- * Mamal AI v3.0 - Extended Educational Circuit Solver
- * Supports multi-resistor series, parallel/Kirchhoff (KVL/KCL), potentiometer,
- * and basic RC DC steady-state circuits while preserving solver-core.js for
- * single-loop LED protection experiments.
+ * Mamal AI v3.1 - Extended Educational Circuit Solver (MNA + Per-Wire Active Flow)
+ * Computes node voltages, total current, equivalent resistance, and exact active
+ * wire IDs so current animation ONLY appears on wires carrying real current.
  */
 
 export function formatCurrent(amps) {
@@ -24,15 +23,38 @@ export function formatResistance(ohms) {
 }
 
 /**
- * Nodal analysis for general DC resistive + voltage/current source circuits
- * (used when the circuit goes beyond the strict single-loop LED model).
+ * Returns the Set of wire IDs that belong to electrically energized nets
+ * connected to an active source loop with non-zero current.
  */
+function findEnergizedWireIds(components, wires, find, activeCompIds) {
+  // Build component-level adjacency only through components that carry current (or closed switches/sources)
+  const portToComp = new Map();
+  for (const c of components) {
+    for (const p of c.ports || []) portToComp.set(p.id, c);
+  }
+  const activeNets = new Set();
+  for (const c of components) {
+    if (!activeCompIds.has(c.id)) continue;
+    for (const p of c.ports || []) activeNets.add(find(p.id));
+  }
+  const energized = new Set();
+  for (const w of wires) {
+    const cA = portToComp.get(w.fromPortId);
+    const cB = portToComp.get(w.toPortId);
+    if (!cA || !cB) continue;
+    if (activeCompIds.has(cA.id) && activeCompIds.has(cB.id) && activeNets.has(find(w.fromPortId))) {
+      energized.add(w.id);
+    }
+  }
+  return energized;
+}
+
 export function simulateExtended(snapshot) {
   const components = snapshot?.components || [];
   const wires = snapshot?.wires || [];
 
   const result = {
-    modelVersion: '3.0.0',
+    modelVersion: '3.1.0',
     status: 'open',
     values: {
       sourceVoltageV: null,
@@ -43,6 +65,7 @@ export function simulateExtended(snapshot) {
       nodeDetails: [],
     },
     ledOn: false,
+    activeWireIds: [],
     diagnostics: [],
     isExtended: true,
   };
@@ -55,18 +78,15 @@ export function simulateExtended(snapshot) {
       code: 'OPEN_CIRCUIT',
       severity: 'info',
       affectedIds: [],
-      messageAr: 'لا يوجد مصدر طاقة. أضف مصدر جهد أو تيار لبدء القياس.',
-      messageEn: 'No power source found. Add a voltage or current source to begin.',
+      messageAr: 'لا يوجد مصدر طاقة في الدائرة. أضف مصدر جهد أو تيار لبدء القياس.',
+      messageEn: 'No power source in the circuit. Add a voltage or current source to begin.',
     });
     return result;
   }
 
-  // Union-find across all ports + closed switches
   const ports = new Map();
   for (const c of components) {
-    for (const p of c.ports || []) {
-      ports.set(p.id, { ...p, component: c });
-    }
+    for (const p of c.ports || []) ports.set(p.id, { ...p, component: c });
   }
   const parent = new Map([...ports.keys()].map((id) => [id, id]));
   const find = (id) => {
@@ -85,18 +105,13 @@ export function simulateExtended(snapshot) {
   };
 
   for (const w of wires) {
-    if (ports.has(w.fromPortId) && ports.has(w.toPortId)) {
-      union(w.fromPortId, w.toPortId);
-    }
+    if (ports.has(w.fromPortId) && ports.has(w.toPortId)) union(w.fromPortId, w.toPortId);
   }
 
-  // Closed switches & inductors (DC steady state) act as near-zero resistance shorts
+  // Closed switches & inductors (DC steady state) conduct directly
   for (const c of components) {
-    if (c.kind === 'switch' && !c.isOpen && c.ports.length === 2) {
-      union(c.ports[0].id, c.ports[1].id);
-    }
-    if (c.kind === 'inductor' && c.ports.length === 2) {
-      union(c.ports[0].id, c.ports[1].id);
+    if ((c.kind === 'switch' && !c.isOpen) || c.kind === 'inductor') {
+      if (c.ports.length === 2) union(c.ports[0].id, c.ports[1].id);
     }
   }
 
@@ -121,13 +136,11 @@ export function simulateExtended(snapshot) {
     return result;
   }
 
-  // Assign contiguous indices to unique electrical nets; ground = netNeg (index 0)
   const netSet = new Set([...ports.keys()].map((id) => find(id)));
   const netList = [netNeg, ...[...netSet].filter((n) => n !== netNeg)];
   const netIdx = new Map(netList.map((n, i) => [n, i]));
 
-  // Build Modified Nodal Analysis (MNA) for resistors, potentiometers, lamps, diodes/LEDs (approx), voltage/current sources
-  const nNodes = netList.length - 1; // excluding ground (idx 0)
+  const nNodes = netList.length - 1;
   const vSources = components.filter((c) => c.kind === 'dc_source' || c.kind === 'ac_source');
   const m = vSources.length;
   const size = nNodes + m;
@@ -135,11 +148,7 @@ export function simulateExtended(snapshot) {
 
   const A = Array.from({ length: size }, () => Array(size).fill(0));
   const z = Array(size).fill(0);
-
-  // Add tiny leak conductance to ground for floating nodes so matrix stays nonsingular
-  for (let i = 0; i < nNodes; i++) {
-    A[i][i] += 1e-12;
-  }
+  for (let i = 0; i < nNodes; i++) A[i][i] += 1e-12;
 
   const stampResistor = (pA, pB, R) => {
     const rVal = Math.max(0.01, Number(R) || 100);
@@ -158,15 +167,11 @@ export function simulateExtended(snapshot) {
     if (c.ports.length < 2) continue;
     const p0 = c.ports[0].id;
     const p1 = c.ports[1].id;
-    if (c.kind === 'resistor' || c.kind === 'potentiometer') {
-      stampResistor(p0, p1, c.resistanceOhms ?? 330);
-    } else if (c.kind === 'lamp') {
+    if (c.kind === 'resistor' || c.kind === 'potentiometer' || c.kind === 'lamp') {
       stampResistor(p0, p1, c.resistanceOhms ?? 100);
     } else if (c.kind === 'led' || c.kind === 'diode') {
-      // Linearized educational model for multi-element networks
       stampResistor(p0, p1, 220);
     } else if (c.kind === 'capacitor') {
-      // DC steady-state open with tiny conductance
       stampResistor(p0, p1, 1e9);
     } else if (c.kind === 'current_source') {
       const iVal = Number(c.currentA) || 0.02;
@@ -181,18 +186,11 @@ export function simulateExtended(snapshot) {
     const row = nNodes + k;
     const iPos = netIdx.get(find(src.ports[0].id)) - 1;
     const iNeg = netIdx.get(find(src.ports[1].id)) - 1;
-    if (iPos >= 0) {
-      A[iPos][row] += 1;
-      A[row][iPos] += 1;
-    }
-    if (iNeg >= 0) {
-      A[iNeg][row] -= 1;
-      A[row][iNeg] -= 1;
-    }
+    if (iPos >= 0) { A[iPos][row] += 1; A[row][iPos] += 1; }
+    if (iNeg >= 0) { A[iNeg][row] -= 1; A[row][iNeg] -= 1; }
     z[row] = Number(src.voltageV) || 5;
   });
 
-  // Gaussian elimination with partial pivoting
   const x = solveLinearSystem(A, z);
   if (!x) return result;
 
@@ -201,13 +199,10 @@ export function simulateExtended(snapshot) {
     return idx === 0 ? 0 : x[idx - 1];
   };
 
-  const Vs = Number(primarySource.voltageV) || (primarySource.kind === 'current_source' ? Math.abs(nodeV(posPort) - nodeV(negPort)) : 5);
+  const Vs = Number(primarySource.voltageV) || Math.abs(nodeV(posPort) - nodeV(negPort)) || 5;
   let totalI = 0;
-  if (vSources.length > 0) {
-    totalI = Math.abs(x[nNodes]);
-  } else if (primarySource.kind === 'current_source') {
-    totalI = Number(primarySource.currentA) || 0.02;
-  }
+  if (vSources.length > 0) totalI = Math.abs(x[nNodes]);
+  else if (primarySource.kind === 'current_source') totalI = Number(primarySource.currentA) || 0.02;
 
   if (totalI < 1e-7) {
     const hasOpenSwitch = components.some((c) => c.kind === 'switch' && c.isOpen);
@@ -221,53 +216,67 @@ export function simulateExtended(snapshot) {
       severity: 'info',
       affectedIds: [],
       messageAr: hasOpenSwitch
-        ? 'المفتاح مفتوح؛ أغلقه بالنقر عليه للسماح بمرور التيار.'
+        ? 'المفتاح مفتوح؛ انقر عليه مباشرة لإغلاق الدائرة.'
         : hasCap
-          ? `المكثف مشحون بالكامل عند جهد ${Vs.toFixed(1)}V (في الحالة المستقرة DC يتوقف التيار).`
-          : 'الدائرة مفتوحة؛ أكمل توصيل المسار بين طرفي المصدر.',
+          ? `المكثف مشحون بالكامل عند ${Vs.toFixed(1)}V (التيار المستقر = 0).`
+          : 'الدائرة مفتوحة؛ أكمل التوصيل بين طرفي المصدر.',
       messageEn: hasOpenSwitch
         ? 'Switch is open; click it directly to close the circuit.'
         : hasCap
-          ? `Capacitor fully charged to ${Vs.toFixed(1)}V (steady-state DC current is 0).`
-          : 'Open circuit; complete the path between source terminals.',
+          ? `Capacitor fully charged to ${Vs.toFixed(1)}V (steady-state DC current = 0).`
+          : 'Open circuit; complete the loop between source terminals.',
     });
     return result;
   }
 
-  // Compute component voltages & currents
+  // Track ONLY components actually carrying non-zero current
+  const activeCompIds = new Set([primarySource.id]);
   const details = [];
-  let firstResistorV = null;
+  let firstVoltage = null;
+
   for (const c of components) {
+    if (c.ports.length < 2) continue;
+    const vDrop = Math.abs(nodeV(c.ports[0].id) - nodeV(c.ports[1].id));
     if (c.kind === 'resistor' || c.kind === 'potentiometer' || c.kind === 'lamp') {
-      const vDrop = Math.abs(nodeV(c.ports[0].id) - nodeV(c.ports[1].id));
       const rVal = Math.max(0.01, Number(c.resistanceOhms) || 100);
       const iBranch = vDrop / rVal;
-      if (firstResistorV === null) firstResistorV = vDrop;
-      details.push({ id: c.id, name: c.name, voltageV: vDrop, currentA: iBranch, resistanceOhms: rVal });
+      if (iBranch > 1e-7) {
+        activeCompIds.add(c.id);
+        if (firstVoltage === null) firstVoltage = vDrop;
+        details.push({ id: c.id, name: c.name, voltageV: vDrop, currentA: iBranch, resistanceOhms: rVal });
+      }
+    } else if (c.kind === 'led' || c.kind === 'diode') {
+      if (vDrop / 220 > 1e-7) activeCompIds.add(c.id);
+    } else if ((c.kind === 'switch' && !c.isOpen) || c.kind === 'inductor') {
+      // Conductive only if its net is energized and part of a closed path (voltage > 0 or connected to active net)
+      const n0 = find(c.ports[0].id);
+      if (n0 === netPos || n0 === netNeg || Math.abs(nodeV(c.ports[0].id)) > 1e-6) {
+        activeCompIds.add(c.id);
+      }
     }
   }
 
+  const energizedWires = findEnergizedWireIds(components, wires, find, activeCompIds);
   const req = totalI > 1e-9 ? Vs / totalI : null;
   result.status = 'valid';
-  result.ledOn = components.some((c) => c.kind === 'led' || c.kind === 'lamp');
+  result.ledOn = components.some((c) => (c.kind === 'led' || c.kind === 'lamp') && activeCompIds.has(c.id));
+  result.activeWireIds = [...energizedWires];
   result.values = {
     sourceVoltageV: Vs,
     circuitCurrentA: totalI,
-    resistorVoltageV: firstResistorV ?? Vs,
-    ledForwardVoltageV: components.some((c) => c.kind === 'led') ? 2.0 : null,
+    resistorVoltageV: firstVoltage ?? Vs,
+    ledForwardVoltageV: components.some((c) => c.kind === 'led' && activeCompIds.has(c.id)) ? 2.0 : null,
     equivalentResistanceOhms: req,
     nodeDetails: details,
   };
+
   const iFmt = formatCurrent(totalI);
-  const detailSummaryAr = details
-    .map((d) => `${d.name}: V=${d.voltageV.toFixed(2)}V, I=${formatCurrent(d.currentA).value}${formatCurrent(d.currentA).unit}`)
-    .join(' | ');
   result.diagnostics.push({
     code: 'OK',
     severity: 'info',
     affectedIds: [],
-    messageAr: `دائرة نشطة! التيار الكلي = ${iFmt.value} ${iFmt.unit}، المقاومة المكافئة ≈ ${formatResistance(req)}. ${detailSummaryAr}`,
-    messageEn: `Active circuit! Total current = ${iFmt.value} ${iFmt.unit}, Req ≈ ${formatResistance(req)}.`,
+    messageAr: `دائرة نشطة! التيار = ${iFmt.value} ${iFmt.unit}، الجهد = ${(firstVoltage ?? Vs).toFixed(2)}V، المقاومة المكافئة ≈ ${formatResistance(req)}.`,
+    messageEn: `Active circuit! Current = ${iFmt.value} ${iFmt.unit}, Voltage = ${(firstVoltage ?? Vs).toFixed(2)}V, Req ≈ ${formatResistance(req)}.`,
   });
   return result;
 }
