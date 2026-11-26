@@ -1,0 +1,13 @@
+{
+  "name": "rowad-almamal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Smart interactive electronic engineering laboratory in the browser - Rowad Al-Mamal",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/circuit/solver.test.js tests/contracts/tutor-contract.test.js tests/visual/tokens.test.js tests/ui/router.test.js tests/features/lab-state.test.js tests/ui/lab-integration.test.js tests/ui/wire-routing.test.js tests/e2e/user-journey.test.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

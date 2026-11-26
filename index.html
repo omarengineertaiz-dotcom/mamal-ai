@@ -1,0 +1,2536 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>رواد المعمل — معمل AI — مختبر الدوائر الإلكترونية الذكي</title>
+  <link rel="stylesheet" href="./src/design-system/tokens.css">
+  <link rel="stylesheet" href="./src/design-system/glass.css">
+  <link rel="stylesheet" href="./src/design-system/animations.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--color-canvas-deep);
+      background-image: radial-gradient(circle at 50% 0%, #20242B 0%, var(--color-canvas-deep) 80%);
+      color: var(--text-primary);
+      font-family: var(--font-family-base);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Application Header */
+    header.app-header {
+      height: 64px;
+      padding: 0 var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--color-border-default);
+      background-color: var(--glass-fallback);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      transition: background-color var(--duration-fast) var(--ease-precise);
+    }
+
+    @supports ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
+      header.app-header {
+        background-color: rgba(21, 23, 27, 0.90);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .btn-mobile-menu {
+      display: none;
+      background: none;
+      border: 1px solid var(--color-border-default);
+      color: var(--text-primary);
+      width: var(--touch-min-size);
+      height: var(--touch-min-size);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-symbol {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--accent-orange), #C85A17);
+      color: #15171B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 18px;
+      box-shadow: 0 2px 10px var(--accent-orange-glow);
+    }
+
+    .brand-text-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      font-size: var(--text-xs);
+      background: rgba(255, 129, 44, 0.15);
+      border: 1px solid var(--accent-orange);
+      color: var(--accent-orange);
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    /* Main App Layout */
+    .app-shell {
+      flex: 1;
+      display: flex;
+      height: calc(100vh - 64px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Persistent Sidebar */
+    .app-sidebar {
+      width: 250px;
+      min-width: 250px;
+      background-color: var(--glass-fallback);
+      border-inline-end: 1px solid var(--color-border-default);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: var(--spacing-md) var(--spacing-sm);
+      transition: width var(--duration-normal) var(--ease-precise),
+                  min-width var(--duration-normal) var(--ease-precise);
+      z-index: 40;
+    }
+
+    @supports ((backdrop-filter: blur(16px)) or (-webkit-backdrop-filter: blur(16px))) {
+      .app-sidebar {
+        background-color: rgba(25, 28, 33, 0.88);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+      }
+    }
+
+    /* Collapsed state (for Lab canvas optimization) */
+    .app-sidebar.collapsed {
+      width: 68px;
+      min-width: 68px;
+      padding: var(--spacing-md) 6px;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      height: var(--touch-min-size);
+      min-height: var(--touch-min-size);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: 0 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color var(--duration-fast) var(--ease-precise),
+                  color var(--duration-fast) var(--ease-precise),
+                  border-color var(--duration-fast) var(--ease-precise);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .nav-btn:hover {
+      background-color: rgba(86, 93, 102, 0.20);
+      color: var(--text-primary);
+    }
+
+    .nav-btn.active {
+      background-color: rgba(255, 129, 44, 0.15);
+      border-color: rgba(255, 129, 44, 0.40);
+      border-inline-start: 4px solid var(--accent-orange);
+      color: var(--accent-orange);
+      font-weight: 700;
+    }
+
+    .nav-btn .nav-icon {
+      font-size: 18px;
+      min-width: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-btn .nav-label {
+      transition: opacity var(--duration-fast) var(--ease-precise);
+    }
+
+    .app-sidebar.collapsed .nav-btn {
+      justify-content: center;
+      padding: 0;
+    }
+
+    .app-sidebar.collapsed .nav-label {
+      display: none;
+    }
+
+    .sidebar-footer {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+      border-top: 1px solid var(--color-border-default);
+      padding-top: var(--spacing-sm);
+    }
+
+    .btn-toggle-sidebar {
+      width: 100%;
+      height: var(--touch-min-size);
+      background: rgba(86, 93, 102, 0.12);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      font-size: var(--text-xs);
+      transition: all var(--duration-fast) var(--ease-precise);
+    }
+
+    .btn-toggle-sidebar:hover {
+      color: var(--text-primary);
+      background: rgba(86, 93, 102, 0.25);
+      border-color: var(--accent-orange);
+    }
+
+    .app-sidebar.collapsed .btn-toggle-sidebar span.collapse-label {
+      display: none;
+    }
+
+    /* Content Area & Persistent Views */
+    .app-content {
+      flex: 1;
+      height: 100%;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .view-container {
+      width: 100%;
+      min-height: 100%;
+      position: relative;
+    }
+
+    .view-panel {
+      display: none;
+      width: 100%;
+      min-height: 100%;
+    }
+
+    .view-panel.active {
+      display: block;
+    }
+
+    /* Mobile Drawer Overlay */
+    .mobile-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 35;
+    }
+
+    @media (max-width: 900px) {
+      .btn-mobile-menu {
+        display: inline-flex;
+      }
+
+      .app-sidebar {
+        position: fixed;
+        top: 64px;
+        right: 0;
+        bottom: 0;
+        width: 260px;
+        min-width: 260px;
+        transform: translateX(100%);
+        transition: transform var(--duration-normal) var(--ease-precise);
+        box-shadow: -8px 0 24px rgba(0, 0, 0, 0.5);
+      }
+
+      .app-sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .mobile-backdrop.active {
+        display: block;
+      }
+    }
+
+    /* ================================================================
+       PAGE 1: HOME VIEW
+       ================================================================ */
+    .home-hero {
+      padding: var(--spacing-2xl) var(--spacing-xl);
+      max-width: 1100px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(255, 129, 44, 0.12);
+      border: 1px solid var(--accent-orange);
+      border-radius: var(--radius-full);
+      color: var(--accent-orange);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .hero-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: var(--spacing-md);
+      color: #FFFFFF;
+    }
+
+    .hero-title span.highlight {
+      color: var(--accent-orange);
+    }
+
+    .hero-subtitle {
+      font-size: var(--text-lg);
+      color: var(--text-secondary);
+      max-width: 780px;
+      margin: 0 auto var(--spacing-xl);
+      line-height: 1.6;
+    }
+
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .hero-stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-md);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .stat-card {
+      padding: var(--spacing-md);
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: var(--text-2xl);
+      font-weight: 800;
+      color: var(--accent-orange);
+      margin-bottom: 4px;
+      font-family: var(--font-family-mono);
+    }
+
+    .stat-desc {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+    }
+
+    /* Features Grid */
+    .section-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: var(--spacing-2xl) var(--spacing-xl);
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .section-header h2 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .section-header p {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--spacing-lg);
+    }
+
+    .feature-card {
+      padding: var(--spacing-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .feature-icon-wrapper {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 129, 44, 0.15);
+      border: 1px solid rgba(255, 129, 44, 0.35);
+      color: var(--accent-orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .feature-card h3 {
+      font-size: var(--text-base);
+      color: #FFFFFF;
+    }
+
+    .feature-card p {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    /* How It Works Steps */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    .step-card {
+      padding: var(--spacing-lg);
+      position: relative;
+    }
+
+    .step-number {
+      font-family: var(--font-family-mono);
+      font-size: var(--text-xl);
+      font-weight: 900;
+      color: var(--accent-orange);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    /* Comparison section */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: var(--spacing-lg);
+    }
+
+    .comparison-card {
+      padding: var(--spacing-xl);
+      border-radius: var(--radius-lg);
+    }
+
+    .comparison-card.problem {
+      border-color: rgba(243, 133, 148, 0.4);
+      background: rgba(243, 133, 148, 0.05);
+    }
+
+    .comparison-card.solution {
+      border-color: rgba(52, 211, 153, 0.4);
+      background: rgba(52, 211, 153, 0.05);
+    }
+
+    .comparison-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: var(--spacing-md);
+      font-size: var(--text-lg);
+    }
+
+    .comparison-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+    }
+
+    .comparison-card li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    footer.app-footer {
+      border-top: 1px solid var(--color-border-default);
+      padding: var(--spacing-xl) var(--spacing-lg);
+      background-color: var(--color-canvas-deep);
+      text-align: center;
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      margin-top: var(--spacing-2xl);
+    }
+
+    /* ================================================================
+       PAGE 2: EXPERIMENTS VIEW
+       ================================================================ */
+    .experiments-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: var(--spacing-lg);
+      margin-top: var(--spacing-lg);
+    }
+
+    .experiment-card {
+      padding: var(--spacing-xl);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--spacing-md);
+      border-radius: var(--radius-xl);
+      transition: transform var(--duration-fast) var(--ease-precise),
+                  border-color var(--duration-fast) var(--ease-precise);
+    }
+
+    .experiment-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .experiment-card.active-exp {
+      border-color: rgba(255, 129, 44, 0.5);
+      box-shadow: 0 8px 24px rgba(255, 129, 44, 0.1);
+    }
+
+    .exp-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      margin-top: var(--spacing-xs);
+    }
+
+    /* ================================================================
+       PAGE 3: LAB VIEW (Interactive Engineering Canvas)
+       ================================================================ */
+    #view-lab.active {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .mission-control-bar {
+      height: 52px;
+      padding: 0 var(--spacing-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--color-border-default);
+      background-color: rgba(25, 28, 33, 0.7);
+      gap: var(--spacing-md);
+    }
+
+    .mission-title-group {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: var(--text-sm);
+      font-weight: 600;
+    }
+
+    .mission-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .lab-layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 260px 1fr 310px;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm);
+      height: calc(100% - 52px);
+      overflow: hidden;
+    }
+
+    @media (max-width: 1080px) {
+      .lab-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+        height: auto;
+        overflow-y: auto;
+      }
+    }
+
+    .lab-sidebar-panel {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md);
+      overflow-y: auto;
+    }
+
+    .toolbox-category-title {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: var(--spacing-xs);
+      font-weight: 700;
+    }
+
+    .tool-btn {
+      width: 100%;
+      justify-content: flex-start;
+      gap: var(--spacing-md);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+    }
+
+    .canvas-container {
+      position: relative;
+      background-color: var(--color-canvas-deep);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .canvas-header {
+      padding: var(--spacing-sm) var(--spacing-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--color-border-default);
+      background: rgba(28, 31, 36, 0.7);
+    }
+
+    .canvas-instructions {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    svg#circuitCanvas {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    /* Readings & Diagnostic Panels */
+    .readings-panel {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md);
+      overflow-y: auto;
+    }
+
+    .meter-card {
+      background: rgba(28, 31, 36, 0.8);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      text-align: center;
+    }
+
+    .meter-label {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .meter-value-wrapper {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .meter-value {
+      font-family: var(--font-family-mono);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--accent-orange);
+      direction: ltr;
+    }
+
+    .meter-unit {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      font-family: var(--font-family-mono);
+    }
+
+    .tutor-drawer-card {
+      background: rgba(35, 39, 46, 0.9);
+      border: 1px solid rgba(255, 129, 44, 0.4);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      font-size: var(--text-sm);
+      line-height: 1.5;
+    }
+
+    .tutor-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: var(--accent-orange);
+      margin-bottom: var(--spacing-xs);
+      font-size: var(--text-xs);
+    }
+
+    /* SVG Component Rendering */
+    .component-group {
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .component-group:active,
+    .component-group.dragging {
+      cursor: grabbing;
+    }
+
+    .component-rect {
+      fill: #22262C;
+      stroke: var(--color-border-default);
+      stroke-width: 1.5;
+      rx: 8;
+      transition: stroke var(--duration-fast) var(--ease-precise), filter var(--duration-fast) var(--ease-precise);
+    }
+
+    .component-group:hover .component-rect {
+      stroke: var(--accent-orange);
+    }
+
+    .component-group.selected .component-rect,
+    .component-group:focus-visible .component-rect {
+      stroke: var(--accent-orange);
+      stroke-width: 2.5;
+      filter: drop-shadow(0 0 6px var(--accent-orange-glow));
+      outline: none;
+    }
+
+    .component-group.tutor-highlight .component-rect {
+      stroke: var(--accent-amber);
+      stroke-width: 3;
+      stroke-dasharray: 6 4;
+    }
+
+    .port-circle {
+      fill: #15171B;
+      stroke: var(--accent-orange);
+      stroke-width: 2;
+      cursor: pointer;
+      transition: r 0.15s, fill 0.15s, stroke 0.15s;
+    }
+
+    .port-circle:hover,
+    .port-circle.selected,
+    .port-circle:focus-visible {
+      fill: var(--accent-orange);
+      stroke: #FFFFFF;
+      r: 8;
+      outline: none;
+    }
+
+    .wire-path {
+      fill: none;
+      stroke: var(--accent-orange);
+      stroke-width: 3;
+      stroke-linecap: round;
+      cursor: pointer;
+      filter: drop-shadow(0 0 3px rgba(255, 129, 44, 0.4));
+      transition: stroke-width var(--duration-fast), stroke var(--duration-fast);
+    }
+
+    .wire-path:hover {
+      stroke: var(--state-error);
+      stroke-width: 4;
+    }
+
+    .wire-temp {
+      fill: none;
+      stroke: var(--accent-amber);
+      stroke-width: 2;
+      stroke-dasharray: 4, 4;
+    }
+
+    /* ================================================================
+       PAGE 4: GUIDE VIEW
+       ================================================================ */
+    .guide-article {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: var(--spacing-2xl) var(--spacing-lg);
+    }
+
+    .guide-section {
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .guide-section h3 {
+      font-size: var(--text-xl);
+      color: #FFFFFF;
+      margin-bottom: var(--spacing-sm);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .formula-box {
+      background: rgba(28, 31, 36, 0.8);
+      border: 1px solid var(--accent-orange);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
+      margin: var(--spacing-md) 0;
+      text-align: center;
+      font-family: var(--font-family-mono);
+      font-size: var(--text-lg);
+      color: var(--accent-orange);
+    }
+
+    /* ================================================================
+       PAGE 5: ABOUT VIEW
+       ================================================================ */
+    .about-article {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: var(--spacing-2xl) var(--spacing-lg);
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--spacing-lg);
+      margin-top: var(--spacing-lg);
+    }
+
+    .team-card {
+      padding: var(--spacing-xl);
+      text-align: center;
+      border-radius: var(--radius-lg);
+    }
+
+    .team-avatar {
+      width: 68px;
+      height: 68px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, #2D323A, #1C1F24);
+      border: 2px solid var(--accent-orange);
+      margin: 0 auto var(--spacing-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .team-name {
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .team-role {
+      font-size: var(--text-xs);
+      color: var(--accent-orange);
+      margin-top: 2px;
+    }
+
+    .team-desc {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin-top: var(--spacing-sm);
+      line-height: 1.5;
+    }
+
+    .sheraa-badge-banner {
+      margin-top: var(--spacing-2xl);
+      padding: var(--spacing-xl);
+      border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, rgba(255, 129, 44, 0.12), rgba(28, 31, 36, 0.8));
+      border: 1px solid var(--accent-orange);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+    }
+
+    @media (max-width: 600px) {
+      .sheraa-badge-banner {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body class="technical-grid-bg">
+
+  <!-- Application Top Header Bar -->
+  <header class="app-header">
+    <div class="brand-section">
+      <button class="btn-mobile-menu" id="btnToggleMobileMenu" aria-label="فتح القائمة الرئيسية" tabindex="0">
+        ☰
+      </button>
+      <a href="#/home" class="brand-logo" aria-label="الانتقال إلى الرئيسية">
+        <div class="brand-symbol">⚡</div>
+        <div class="brand-text-title">
+          <span>رواد المعمل</span>
+          <span class="brand-badge">G1.5</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-actions">
+      <span class="status-badge status-badge-valid" id="headerStatus">
+        ● المحرك متصل
+      </span>
+      <button class="glass-card-interactive glass-btn-primary" id="btnHeaderLaunchLab" style="min-height: 36px; padding: 6px 14px; font-size: 13px;" aria-label="دخول المختبر التفاعلي" tabindex="0">
+        ⚡ المختبر
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Backdrop -->
+  <div class="mobile-backdrop" id="drawerBackdrop"></div>
+
+  <!-- App Shell: Sidebar + Multi-view Content Area -->
+  <div class="app-shell">
+
+    <!-- Collapsible Sidebar & Mobile Drawer -->
+    <aside class="app-sidebar" id="appSidebar" aria-label="قائمة التنقل الجانبية">
+      <nav class="sidebar-nav" role="navigation">
+        <a href="#/home" class="nav-btn active" data-route="home" id="navLinkHome" aria-label="الصفحة الرئيسية" tabindex="0">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">الرئيسية</span>
+        </a>
+        <a href="#/experiments" class="nav-btn" data-route="experiments" id="navLinkExperiments" aria-label="فهرس التجارب الهندسية" tabindex="0">
+          <span class="nav-icon">🧪</span>
+          <span class="nav-label">التجارب الهندسية</span>
+        </a>
+        <a href="#/lab" class="nav-btn" data-route="lab" id="navLinkLab" aria-label="المختبر التفاعلي" tabindex="0">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">المختبر التفاعلي</span>
+        </a>
+        <a href="#/guide" class="nav-btn" data-route="guide" id="navLinkGuide" aria-label="دليل الاستخدام" tabindex="0">
+          <span class="nav-icon">📖</span>
+          <span class="nav-label">دليل الاستخدام</span>
+        </a>
+        <a href="#/about" class="nav-btn" data-route="about" id="navLinkAbout" aria-label="عن المشروع" tabindex="0">
+          <span class="nav-icon">ℹ️</span>
+          <span class="nav-label">عن المشروع</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-toggle-sidebar" id="btnToggleSidebarCollapse" aria-label="طي أو توسيع الشريط الجانبي" tabindex="0">
+          <span id="collapseIcon">◀</span>
+          <span class="collapse-label">طي الشريط الجانبي</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Persistent Content Views Area -->
+    <main class="app-content" id="mainContent">
+      <div class="view-container">
+
+        <!-- ==========================================================
+             VIEW 1: HOME (#/home)
+             ========================================================== -->
+        <section id="view-home" class="view-panel active animate-fade-in" aria-label="الصفحة الرئيسية">
+          <div class="home-hero">
+            <div class="hero-eyebrow">
+              <span>🏆</span>
+              <span>المرحلة G1.5 — هاكاثون شراع 2026</span>
+            </div>
+            <h1 class="hero-title">
+              معمل AI — مختبر الدوائر الإلكترونية الذكي<br>
+              <span class="highlight">تعلّم، جرّب، وأتقن دون خوف</span>
+            </h1>
+            <p class="hero-subtitle">
+              منصة هندسية عربية تفاعلية تحاكي الدوائر الكهربائية بدقة فيزيائية حتمية في المتصفح، مدعومة بمرشد ذكي يعزز التفكير الهندسي وفق المنهج السقراطي لتمكين مهندسي الغد.
+            </p>
+            <div class="hero-ctas">
+              <button class="glass-card-interactive glass-btn-primary" id="btnHeroGoLab" style="padding: 12px 24px; font-size: 16px;" aria-label="ابدأ التجربة في المختبر" tabindex="0">
+                🚀 ابدأ التجربة التفاعلية الآن
+              </button>
+              <button class="glass-card-interactive" id="btnHeroGoExperiments" style="padding: 12px 20px; font-size: 15px;" aria-label="استعراض فهرس التجارب" tabindex="0">
+                🧪 استعراض التجارب
+              </button>
+              <button class="glass-card-interactive" id="btnHeroGoGuide" style="padding: 12px 20px; font-size: 15px;" aria-label="قراءة دليل الاستخدام" tabindex="0">
+                📖 دليل الاستخدام
+              </button>
+            </div>
+
+            <!-- Fast Stats -->
+            <div class="hero-stats-bar">
+              <div class="smoky-glass-panel stat-card">
+                <div class="stat-val">100%</div>
+                <div class="stat-desc">محاكاة فورية حتمية في المتصفح</div>
+              </div>
+              <div class="smoky-glass-panel stat-card">
+                <div class="stat-val">0</div>
+                <div class="stat-desc">مخاطر احتراق أو تلف المكونات</div>
+              </div>
+              <div class="smoky-glass-panel stat-card">
+                <div class="stat-val">AI Tutor</div>
+                <div class="stat-desc">مرشد سقراطي للتوجيه المعرفي</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Laboratory Features -->
+          <div class="section-container">
+            <div class="section-header">
+              <h2>مميزات مختبر رواد المعمل</h2>
+              <p>مصمم وفق أعلى المعايير الهندسية والتربوية العالمية لتوفير تجربة تعليمية فائقة الجودة</p>
+            </div>
+            <div class="features-grid">
+              <div class="smoky-glass-panel feature-card">
+                <div class="feature-icon-wrapper">⚡</div>
+                <h3>محرك فيزيائي حتمي فوري</h3>
+                <p>حسابات رياضية فورية وفق قانون أوم وقوانين كيرشوف، بدون تقريب عشوائي أو تأخير في الاستجابة.</p>
+              </div>
+              <div class="smoky-glass-panel feature-card">
+                <div class="feature-icon-wrapper">🤖</div>
+                <h3>مرشد ذكي سقراطي</h3>
+                <p>لا يقدم الإجابات الجاهزة، بل يحلل حالة الدائرة ويوجه أسئلة ذكية تحفز التفكير الهندسي والاستنتاج الذاتي.</p>
+              </div>
+              <div class="smoky-glass-panel feature-card">
+                <div class="feature-icon-wrapper">🛡️</div>
+                <h3>بيئة معملية آمنة بالكامل</h3>
+                <p>جرّب مختلف قيم المقاومات وافحص حالات التيار الزائد دون قلق من احتراق صمامات الـ LED أو المكونات الحساسة.</p>
+              </div>
+              <div class="smoky-glass-panel feature-card">
+                <div class="feature-icon-wrapper">♿</div>
+                <h3>معايير نفاذية ووصول WCAG 2.2</h3>
+                <p>دعم كامل للتنقل بلوحة المفاتيح عبر زر Tab ومفتاح Enter، وأهداف لمس واسعة (44px)، وتباين بصري عالي.</p>
+              </div>
+              <div class="smoky-glass-panel feature-card">
+                <div class="feature-icon-wrapper">🌐</div>
+                <h3>دعم أصيل للغة العربية</h3>
+                <p>واجهة متكاملة باللغة العربية مع دعم كامل لاتجاه RTL ومصطلحات هندسية دقيقة متوافقة مع المناهج المعتمدة.</p>
+              </div>
+              <div class="smoky-glass-panel feature-card">
+                <div class="feature-icon-wrapper">📱</div>
+                <h3>تصميم دخاني حديث وخفيف</h3>
+                <p>واجهة Midnight Smoky Glass مريحة للعين، متوافقة مع الهواتف والأجهزة اللوحية والحواسيب المكتبية.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- How It Works -->
+          <div class="section-container" style="background: rgba(21, 23, 27, 0.4);">
+            <div class="section-header">
+              <h2>آلية العمل في المعمل</h2>
+              <p>أربع خطوات بسيطة تبدأ بها رحلتك المعملية وتصل بها إلى الإتقان</p>
+            </div>
+            <div class="steps-grid">
+              <div class="smoky-glass-panel step-card">
+                <div class="step-number">01</div>
+                <h4 style="margin-bottom: 6px; color: #FFF;">اختر التجربة</h4>
+                <p style="font-size: var(--text-xs); color: var(--text-secondary);">استعرض قائمة التجارب الهندسية واختر المفهوم العلمي المطلوب.</p>
+              </div>
+              <div class="smoky-glass-panel step-card">
+                <div class="step-number">02</div>
+                <h4 style="margin-bottom: 6px; color: #FFF;">ابنِ الدائرة</h4>
+                <p style="font-size: var(--text-xs); color: var(--text-secondary);">أضف مصدر التغذية والمقاومة والـ LED وصِل الأسلاك بين المنافذ.</p>
+              </div>
+              <div class="smoky-glass-panel step-card">
+                <div class="step-number">03</div>
+                <h4 style="margin-bottom: 6px; color: #FFF;">حلل القياسات</h4>
+                <p style="font-size: var(--text-xs); color: var(--text-secondary);">شغّل المفتاح وراقب قراءات التيار الفعلي وهبوط الجهد وحالة الإضاءة.</p>
+              </div>
+              <div class="smoky-glass-panel step-card">
+                <div class="step-number">04</div>
+                <h4 style="margin-bottom: 6px; color: #FFF;">استشر المرشد</h4>
+                <p style="font-size: var(--text-xs); color: var(--text-secondary);">تلقَّ ملاحظات لحظية من الذكاء الاصطناعي لفهم السلوك الفيزيائي بعمق.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- The Problem and Solution -->
+          <div class="section-container">
+            <div class="section-header">
+              <h2>المشكلة التعليمية والحل المبتكر</h2>
+              <p>كيف يعيد رواد المعمل تعريف التجربة التعليمية في كليات الهندسة والمدارس</p>
+            </div>
+            <div class="comparison-grid">
+              <div class="smoky-glass-panel comparison-card problem">
+                <h3 style="color: var(--state-error);">
+                  <span>⚠️</span>
+                  <span>التحديات التقليدية في المعامل</span>
+                </h3>
+                <ul>
+                  <li>❌ ندرة المقاعد والأجهزة المعملية الحديثة مقارنة بأعداد الطلاب المتزايدة.</li>
+                  <li>❌ التكلفة المستمرة لشراء المكونات الاستهلاكية وبطاريات التغذية والأسلاك.</li>
+                  <li>❌ قلق وخوف الطلاب من ارتكاب أخطاء قد تؤدي لاحتراق القطع أو قصر الدائرة.</li>
+                  <li>❌ غياب التوجيه الفردي المستمر لكل طالب أثناء محاولاته المستقلة.</li>
+                </ul>
+              </div>
+
+              <div class="smoky-glass-panel comparison-card solution">
+                <h3 style="color: var(--state-success);">
+                  <span>✅</span>
+                  <span>حل رواد المعمل</span>
+                </h3>
+                <ul>
+                  <li>✔️ مختبر شخصي متاح مجاناً على مدار الساعة لكل طالب في أي متصفح.</li>
+                  <li>✔️ إمكانية تكرار التجربة مئات المرات دون استهلاك أو تلف مادي للمكونات.</li>
+                  <li>✔️ بيئة آمنة تشجع على التجريب والتعلم العملي من الأخطاء دون خوف.</li>
+                  <li>✔️ مرشد ذكي مرافق في كل خطوة يقدم التوجيه اللحظي والنصائح الهندسية.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <footer class="app-footer">
+            <p style="margin-bottom: 8px;">رواد المعمل — معمل AI — مختبر الدوائر الإلكترونية الذكي © 2026</p>
+            <p>تطوير فريق رواد المعمل — المشارك في هاكاثون شراع 2026 (عُمر، صقر، زكريا، حمزة)</p>
+          </footer>
+        </section>
+
+
+        <!-- ==========================================================
+             VIEW 2: EXPERIMENTS (#/experiments)
+             ========================================================== -->
+        <section id="view-experiments" class="view-panel" aria-label="فهرس التجارب الهندسية" hidden>
+          <div class="section-container">
+            <div class="section-header" style="text-align: right;">
+              <span class="status-badge status-badge-orange" style="margin-bottom: 8px;">دليل التجارب التعليمية</span>
+              <h2>التجارب الهندسية المتاحة والمستقبلية</h2>
+              <p>تجارب عملية مصممة لترسيخ المفاهيم الهندسية الأساسية والمتقدمة في الإلكترونيات والفيزياء الكهربائية.</p>
+            </div>
+
+            <div class="experiments-grid">
+              <!-- Active Experiment 1 -->
+              <div class="smoky-glass-panel experiment-card active-exp">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <span class="status-badge status-badge-valid">● نشطة ومكتملة</span>
+                    <span style="font-size: 26px;">⚡</span>
+                  </div>
+                  <h3 style="font-size: var(--text-lg); color: #FFFFFF; margin-bottom: 8px;">قانون أوم وحماية صمام LED</h3>
+                  <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.6;">
+                    استكشف العلاقة الأساسية بين الجهد والتيار والمقاومة (V = I × R)، وتعرف على كيفية حماية صمامات LED من التلف باستخدام مقاومة الحد من التيار المناسبة (330Ω).
+                  </p>
+                  <div class="exp-meta">
+                    <span>⏱️ المدة: 10 دقائق</span>
+                    <span>•</span>
+                    <span>📊 المستوى: مبتدئ</span>
+                    <span>•</span>
+                    <span>🔋 المصدر: 5V DC</span>
+                  </div>
+                </div>
+                <div style="margin-top: var(--spacing-lg);">
+                  <button class="glass-card-interactive glass-btn-primary" id="btnStartOhmsExperiment" style="width: 100%;" aria-label="بدء تجربة قانون أوم" tabindex="0">
+                    🚀 بدء التجربة في المختبر
+                  </button>
+                </div>
+              </div>
+
+              <!-- Upcoming Experiment 2 -->
+              <div class="smoky-glass-panel experiment-card" style="opacity: 0.85;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <span class="status-badge status-badge-open">🔒 قيد التطوير — قريباً</span>
+                    <span style="font-size: 26px;">🔀</span>
+                  </div>
+                  <h3 style="font-size: var(--text-lg); color: #FFFFFF; margin-bottom: 8px;">توصيل المقاومات على التوالي والتوازي</h3>
+                  <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.6;">
+                    دراسة خصائص التيار المشترك وتجزئة الجهد في دوائر التوالي، ومقارنتها بثبات الجهد وتفرع التيار في دوائر التوازي، مع حساب المقاومة المكافئة (Req).
+                  </p>
+                  <div class="exp-meta">
+                    <span>⏱️ المدة: 15 دقيقة</span>
+                    <span>•</span>
+                    <span>📊 المستوى: متوسط</span>
+                    <span>•</span>
+                    <span>المرحلة G2 القادمة</span>
+                  </div>
+                </div>
+                <div style="margin-top: var(--spacing-lg);">
+                  <button class="glass-card-interactive" disabled style="width: 100%; opacity: 0.5; cursor: not-allowed;" aria-disabled="true">
+                    🔒 قيد التطوير في المرحلة القادمة
+                  </button>
+                </div>
+              </div>
+
+              <!-- Upcoming Experiment 3 -->
+              <div class="smoky-glass-panel experiment-card" style="opacity: 0.65;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <span class="status-badge status-badge-subtle">🔒 قيد التخطيط</span>
+                    <span style="font-size: 26px;">📐</span>
+                  </div>
+                  <h3 style="font-size: var(--text-lg); color: #FFFFFF; margin-bottom: 8px;">قوانين كيرشوف للجهد والتيار (KVL / KCL)</h3>
+                  <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.6;">
+                    التحليل الرياضي والعملي للدوائر متعددة الحلقات والعقد، والتأكد من انحفاظ الطاقة والشحنة في الشبكات الكهربائية المركبة.
+                  </p>
+                  <div class="exp-meta">
+                    <span>⏱️ المدة: 20 دقيقة</span>
+                    <span>•</span>
+                    <span>📊 المستوى: متقدم</span>
+                    <span>•</span>
+                    <span>المرحلة G3 المخططة</span>
+                  </div>
+                </div>
+                <div style="margin-top: var(--spacing-lg);">
+                  <button class="glass-card-interactive" disabled style="width: 100%; opacity: 0.4; cursor: not-allowed;" aria-disabled="true">
+                    🔒 قيد التخطيط
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==========================================================
+             VIEW 3: LAB (#/lab)
+             ========================================================== -->
+        <section id="view-lab" class="view-panel" aria-label="المختبر التفاعلي" hidden>
+          <!-- Mission Control Bar -->
+          <div class="mission-control-bar">
+            <div class="mission-title-group">
+              <span>⚡ تجربة: قانون أوم وحماية LED</span>
+              <span class="status-badge status-badge-open" id="circuitBadge">المختبر فارغ</span>
+            </div>
+            <div class="mission-actions">
+              <button class="glass-card-interactive" id="btnToggleSwitch" style="color: var(--accent-amber); min-height: 36px; padding: 4px 12px; font-size: 13px;" aria-label="تبديل المفتاح" tabindex="0">
+                <span>🔄</span>
+                <span id="switchStatusLabel">المفتاح (مغلق)</span>
+              </button>
+              <button class="glass-card-interactive" id="btnUndo" style="min-height: 36px; padding: 4px 12px; font-size: 13px;" aria-label="تراجع عن الخطوة السابقة" tabindex="0" title="تراجع (Ctrl+Z)">
+                <span>↶</span>
+                <span>تراجع</span>
+              </button>
+              <button class="glass-card-interactive" id="btnRedo" style="min-height: 36px; padding: 4px 12px; font-size: 13px;" aria-label="إعادة الخطوة السابقة" tabindex="0" title="إعادة (Ctrl+Y)">
+                <span>↷</span>
+                <span>إعادة</span>
+              </button>
+              <button class="glass-card-interactive" id="btnDeleteComponent" style="color: var(--state-error); min-height: 36px; padding: 4px 12px; font-size: 13px;" aria-label="حذف القطعة المحددة" tabindex="0" disabled title="حذف القطعة المحددة (Delete)">
+                <span>❌</span>
+                <span>حذف القطعة</span>
+              </button>
+              <button class="glass-card-interactive" id="btnReloadDefault" style="min-height: 36px; padding: 4px 12px; font-size: 13px;" aria-label="عرض الدائرة النموذجية" tabindex="0">
+                <span>↩️</span>
+                <span>الدائرة النموذجية</span>
+              </button>
+              <button class="glass-card-interactive" id="btnReset" style="color: var(--state-error); min-height: 36px; padding: 4px 12px; font-size: 13px;" aria-label="مسح الأسلاك فقط" tabindex="0">
+                <span>🗑️</span>
+                <span>مسح الأسلاك</span>
+              </button>
+              <button class="glass-card-interactive" id="btnClearCircuit" style="color: var(--state-error); min-height: 36px; padding: 4px 12px; font-size: 13px;" aria-label="مسح جميع المكونات والأسلاك والبدء من الصفر" tabindex="0">
+                <span>🧹</span>
+                <span>مسح الدائرة</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Lab Layout Grid -->
+          <div class="lab-layout">
+            <!-- Left: Component Toolbox -->
+            <aside class="smoky-glass-panel lab-sidebar-panel" aria-label="مكتبة المكونات والأدوات">
+              <h2 style="font-size: var(--text-base); color: var(--text-primary); font-weight: 700;">أدوات المعمل</h2>
+              
+              <div class="toolbox-category-title">مصادر الطاقة</div>
+              <button class="glass-card-interactive tool-btn" id="btnAddBattery" aria-label="إضافة بطارية 5V" tabindex="0">
+                <span>🔋</span>
+                <span>مصدر جهد (5V DC)</span>
+              </button>
+
+              <div class="toolbox-category-title">المقاومات</div>
+              <button class="glass-card-interactive tool-btn" id="btnAddResistor" aria-label="إضافة مقاومة حماية 330 أوم" tabindex="0">
+                <span>⚡</span>
+                <span>مقاومة حماية (330Ω)</span>
+              </button>
+
+              <div class="toolbox-category-title">المكونات الضوئية</div>
+              <button class="glass-card-interactive tool-btn" id="btnAddLed" aria-label="إضافة صمام ثنائي LED" tabindex="0">
+                <span>💡</span>
+                <span>صمام ضوئي (LED)</span>
+              </button>
+
+              <div class="toolbox-category-title">التحكم والقطع</div>
+              <button class="glass-card-interactive tool-btn" id="btnAddSwitch" aria-label="إضافة مفتاح كهربائي" tabindex="0">
+                <span>🔘</span>
+                <span>مفتاح كهربائي (SPST)</span>
+              </button>
+
+              <div style="margin-top: auto; padding-top: var(--spacing-sm); border-top: 1px solid var(--color-border-default);">
+                <div style="font-size: var(--text-xs); color: var(--text-muted); line-height: 1.4;">
+                  💡 <strong>نصيحة:</strong> اضغط على المنفذ (+) في البطارية ثم (1) في المقاومة لبدء التوصيل.
+                </div>
+              </div>
+            </aside>
+
+            <!-- Center: Interactive Native SVG Canvas -->
+            <section class="canvas-container" aria-label="لوحة العمل المعملية">
+              <div class="canvas-header">
+                <span class="canvas-instructions" id="canvasHint">
+                  ابدأ بإضافة قطع الدائرة من صندوق الأدوات. بعد ذلك انقر على منفذين لتوصيلهما بسلك.
+                </span>
+                <span class="brand-badge">نموذج فيزيائي حتمي</span>
+              </div>
+
+              <svg id="circuitCanvas" viewBox="0 0 800 560" aria-label="لوحة رسم الدائرة الكهربائية" role="region">
+                <defs>
+                  <radialGradient id="ledGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#FF944D" stop-opacity="0.95" />
+                    <stop offset="60%" stop-color="#FF812C" stop-opacity="0.4" />
+                    <stop offset="100%" stop-color="#FF812C" stop-opacity="0" />
+                  </radialGradient>
+                </defs>
+                <!-- Grid pattern for engineering workspace -->
+                <g id="gridLayer" stroke="rgba(86, 93, 102, 0.12)" stroke-width="1"></g>
+                <!-- Wires Layer -->
+                <g id="wiresLayer"></g>
+                <!-- Preview Wire while connecting -->
+                <path id="tempWire" class="wire-temp" d="" style="display: none;"></path>
+                <!-- Components Layer -->
+                <g id="componentsLayer"></g>
+                <g id="emptyCanvasGuide" aria-hidden="true" pointer-events="none">
+                  <text x="400" y="252" text-anchor="middle" fill="#DCE1E7" font-size="22" font-weight="700">ابدأ ببناء دائرتك بنفسك</text>
+                  <text x="400" y="292" text-anchor="middle" fill="#A4ADB8" font-size="15">أضف القطع من قائمة الأدوات، ثم صِل المنافذ.</text>
+                  <text x="400" y="324" text-anchor="middle" fill="#FF812C" font-size="14">تحتاج مساعدة؟ استخدم زر «الدائرة النموذجية».</text>
+                </g>
+              </svg>
+            </section>
+
+            <!-- Right: Measurements & Tutor Drawer -->
+            <aside class="smoky-glass-panel readings-panel" aria-label="لوحة القياسات المحسوبة والمرشد الذكي">
+              <h2 style="font-size: var(--text-base); color: var(--text-primary); font-weight: 700;">القياسات الفيزيائية</h2>
+
+              <!-- Measurement 1: Current -->
+              <div class="meter-card">
+                <div class="meter-label">تيار الدائرة (Circuit Current)</div>
+                <div class="meter-value-wrapper">
+                  <span class="meter-value" id="valCurrent">0.00</span>
+                  <span class="meter-unit" id="valCurrentUnit">mA</span>
+                </div>
+              </div>
+
+              <!-- Measurement 2: Resistor Voltage -->
+              <div class="meter-card">
+                <div class="meter-label">هبوط جهد المقاومة (VR)</div>
+                <div class="meter-value-wrapper">
+                  <span class="meter-value" id="valVr">0.00</span>
+                  <span class="meter-unit" id="valVrUnit">V</span>
+                </div>
+              </div>
+
+              <!-- Measurement 3: LED Status -->
+              <div class="meter-card">
+                <div class="meter-label">حالة الصمام الضوئي (LED)</div>
+                <div id="ledStateIndicator" style="font-weight: 700; color: var(--text-muted); margin-top: 4px; font-size: var(--text-base);">
+                  مطفأ (OFF)
+                </div>
+              </div>
+
+                            <!-- Resistor Value Selector (Live Overcurrent Demo) -->
+              <div class="meter-card" style="padding: var(--spacing-sm);">
+                <div class="meter-label" style="margin-bottom: 6px;">قيمة المقاومة (اختبر قانون أوم)</div>
+                <div style="display: flex; gap: 6px;" id="resistorValueGroup">
+                  <button type="button" class="btn-secondary res-val-btn" data-ohms="100" style="flex:1; padding: 6px 4px; font-size: 12px; border-color: rgba(243,133,148,0.45);">100Ω</button>
+                  <button type="button" class="btn-secondary res-val-btn active-res" data-ohms="330" style="flex:1; padding: 6px 4px; font-size: 12px; border-color: var(--accent-orange); background: rgba(255,129,44,0.18);">330Ω</button>
+                  <button type="button" class="btn-secondary res-val-btn" data-ohms="1000" style="flex:1; padding: 6px 4px; font-size: 12px;">1kΩ</button>
+                </div>
+              </div>
+
+              <!-- Smart AI Tutor Card -->
+              <div class="tutor-drawer-card">
+                <div class="tutor-header" style="justify-content: space-between; width: 100%;">
+                  <span style="display: inline-flex; align-items: center; gap: 6px;"><span>🤖</span><span>المرشد الذكي (معمل AI)</span></span>
+                  <span id="tutorModeBadge" style="font-size: 10px; padding: 2px 7px; border-radius: 999px; background: rgba(255,129,44,0.16); color: var(--accent-orange); border: 1px solid rgba(255,129,44,0.35);">جاهز للتحليل</span>
+                </div>
+                <div id="tutorMessageBox" style="color: var(--text-primary); line-height: 1.55;">
+                  مرحباً بك! أضف البطارية والمقاومة وLED والمفتاح من أدوات المعمل، ثم وصّلها بنفسك. عند الحاجة، يمكنك عرض الدائرة النموذجية من الشريط العلوي.
+                </div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+                  <button type="button" id="btnAskAiAnalyze" class="btn-secondary" style="font-size: 11px; padding: 5px 8px; border-color: rgba(255,129,44,0.45); color: var(--accent-orange);">✨ حلّل دائرتي بـ Gemini AI</button>
+                  <button type="button" class="btn-secondary quick-q-btn" data-q="لماذا نحتاج مقاومة حماية مع LED وكيف نحسبها؟" style="font-size: 11px; padding: 5px 8px;">كيف نحسب المقاومة؟</button>
+                </div>
+                <form id="tutorQuestionForm" style="display: flex; gap: 6px; margin-top: 8px;">
+                  <input id="tutorQuestionInput" type="text" placeholder="اسأل المرشد بالعربية أو الإنجليزية..." aria-label="اسأل المرشد الذكي" style="flex: 1; min-width: 0; background: rgba(21,23,27,0.75); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); color: var(--text-primary); padding: 7px 10px; font-size: 12px; font-family: inherit;" />
+                  <button type="submit" id="btnSendTutorQ" class="btn-primary" style="padding: 7px 12px; font-size: 12px; white-space: nowrap;">إرسال</button>
+                </form>
+              </div>
+
+              <!-- Safety notes -->
+              <div style="background: rgba(21, 23, 27, 0.4); border-radius: var(--radius-sm); padding: var(--spacing-sm); font-size: 11px; color: var(--text-muted); line-height: 1.4;">
+                🛡️ <strong>معيار الأمان:</strong> صمام LED يتحمل تياراً أقصى 20mA. تعمل المقاومة 330Ω على حصر التيار عند 9.1mA لمنع احتراقه.
+              </div>
+            </aside>
+          </div>
+        </section>
+
+
+        <!-- ==========================================================
+             VIEW 4: GUIDE (#/guide)
+             ========================================================== -->
+        <section id="view-guide" class="view-panel" aria-label="دليل الاستخدام" hidden>
+          <article class="guide-article">
+            <div class="section-header" style="text-align: right; margin-bottom: var(--spacing-2xl);">
+              <span class="status-badge status-badge-orange" style="margin-bottom: 8px;">دليل الاستخدام الهندسي</span>
+              <h2>كيف تستخدم منصة رواد المعمل وتتقن المفاهيم</h2>
+              <p>شرح تفصيلي خطوة بخطوة للتعامل مع بيئة المحاكاة، التوصيل بالماوس أو لوحة المفاتيح، والأسس العلمية للتجربة.</p>
+            </div>
+
+            <!-- Step 1 -->
+            <div class="smoky-glass-panel guide-section" style="padding: var(--spacing-xl);">
+              <h3>
+                <span style="color: var(--accent-orange);">1.</span>
+                <span>إضافة المكونات وتحريكها في مساحة العمل</span>
+              </h3>
+              <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: var(--spacing-md);">
+                تحتوي القائمة الجانبية في المختبر على صندوق الأدوات المصنف. يمكنك إضافة المكونات بالضغط على بطاقة العنصر، وتتضمن:
+              </p>
+              <ul style="color: var(--text-secondary); padding-inline-start: 24px; line-height: 1.8;">
+                <li><strong>مصدر جهد (5V DC):</strong> بطارية توفر فرق جهد مستمر مقداره 5 فولت.</li>
+                <li><strong>مقاومة حماية (330Ω):</strong> تحد من مرور التيار لحماية العناصر الحساسة.</li>
+                <li><strong>صمام باعث للضوء (LED):</strong> يتطلب تياراً في اتجاه واحد ويضيء عندما يكون التيار آمناً.</li>
+                <li><strong>مفتاح كهربائي (SPST):</strong> يفتح أو يغلق المسار الكهربائي للتحكم في تدفق التيار.</li>
+              </ul>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="smoky-glass-panel guide-section" style="padding: var(--spacing-xl);">
+              <h3>
+                <span style="color: var(--accent-orange);">2.</span>
+                <span>توصيل الأسلاك بين المنافذ (بالماوس أو لوحة المفاتيح)</span>
+              </h3>
+              <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: var(--spacing-md);">
+                تم تصميم المنصة لتدعم النفاذية الشاملة (WCAG 2.2 AA) بكفاءة عالية:
+              </p>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--spacing-md);">
+                <div style="background: rgba(28, 31, 36, 0.7); padding: var(--spacing-md); border-radius: var(--radius-md);">
+                  <h4 style="color: var(--accent-orange); margin-bottom: 6px;">🖱️ باستخدام الماوس</h4>
+                  <p style="font-size: var(--text-sm); color: var(--text-secondary);">
+                    انقر على منفذ البداية (الدائرة الصغيرة على طرف القطعة) حتى يتحول للون البرتقالي، ثم انقر على المنفذ المستهدف لإتمام السلك.
+                  </p>
+                </div>
+                <div style="background: rgba(28, 31, 36, 0.7); padding: var(--spacing-md); border-radius: var(--radius-md);">
+                  <h4 style="color: var(--accent-orange); margin-bottom: 6px;">⌨️ باستخدام لوحة المفاتيح</h4>
+                  <p style="font-size: var(--text-sm); color: var(--text-secondary);">
+                    استخدم زر <code>Tab</code> للانتقال بين المنافذ، واضغط <code>Enter</code> أو <code>Space</code> لاختيار المنفذ الأول، ثم كرر الأمر للمنفذ الثاني.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Science & Ohm's Law -->
+            <div class="smoky-glass-panel guide-section" style="padding: var(--spacing-xl);">
+              <h3>
+                <span style="color: var(--accent-orange);">3.</span>
+                <span>الأساس العلمي: قانون أوم وحساب مقاومة حماية LED</span>
+              </h3>
+              <p style="color: var(--text-secondary); line-height: 1.7;">
+                ينص قانون أوم على أن شدة التيار الكهربائي المار في موصل تتناسب طردياً مع فرق الجهد بين طرفيه وعكسياً مع مقاومته:
+              </p>
+              <div class="formula-box">
+                V = I × R &nbsp;&nbsp;⟺&nbsp;&nbsp; I = V / R &nbsp;&nbsp;⟺&nbsp;&nbsp; R = V / I
+              </div>
+              <h4 style="color: #FFFFFF; margin: var(--spacing-md) 0 8px;">لماذا نحتاج لمقاومة حماية مع الصمام الضوئي؟</h4>
+              <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: var(--spacing-sm);">
+                صمام الـ LED هو عنصر شبه موصل ذو انخفاض جهد أمامي ثابت تقريباً (Vf ≈ 2.0V). بمجرد تجاوز هذا الجهد، تصبح مقاومته الداخلية ضئيلة جداً. إذا وُصل مباشرة بمصدر 5V، سيتدفق تيار هائل يتلف الصمام فوراً!
+              </p>
+              <div style="background: rgba(255, 129, 44, 0.08); border-inline-start: 4px solid var(--accent-orange); padding: var(--spacing-md); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-top: var(--spacing-md);">
+                <strong style="color: var(--accent-orange);">معادلة حساب مقاومة الحماية:</strong><br>
+                <code style="font-family: var(--font-family-mono); font-size: 14px; color: #FFFFFF; display: block; margin-top: 6px;">
+                  R = (V_source - V_LED) / I_target = (5.0V - 2.0V) / 0.0091A = 3.0V / 0.0091A ≈ 330 Ω
+                </code>
+                <span style="font-size: var(--text-xs); color: var(--text-secondary); display: block; margin-top: 6px;">
+                  لذلك فإن اختيار مقاومة 330Ω يضمن سريان تيار آمن مقداره 9.09mA، وهو كافٍ لإضاءة الصمام دون أي خطر لاحتراقه.
+                </span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+
+        <!-- ==========================================================
+             VIEW 5: ABOUT (#/about)
+             ========================================================== -->
+        <section id="view-about" class="view-panel" aria-label="عن مشروع رواد المعمل" hidden>
+          <article class="about-article">
+            <div class="section-header" style="text-align: right; margin-bottom: var(--spacing-2xl);">
+              <span class="status-badge status-badge-orange" style="margin-bottom: 8px;">عن المشروع والرؤية</span>
+              <h2>منصة «رواد المعمل» — لتمكين مهندسي الغد</h2>
+              <p>مبادرة تعليمية تقنية رائدة تسعى إلى رقمنة وتيسير التعليم الهندسي العملي لكل طالب عربي.</p>
+            </div>
+
+            <!-- Vision and Mission -->
+            <div class="smoky-glass-panel" style="padding: var(--spacing-xl); margin-bottom: var(--spacing-xl);">
+              <h3 style="font-size: var(--text-lg); color: #FFFFFF; margin-bottom: var(--spacing-sm);">🎯 الرؤية والرسالة</h3>
+              <p style="color: var(--text-secondary); line-height: 1.75; font-size: var(--text-sm);">
+                نؤمن في «رواد المعمل» بأن أفضل طريقة لفهم الهندسة والفيزياء هي التجربة المباشرة دون قيود. نسعى إلى كسر حاجز الخوف من ارتكاب الأخطاء عبر تقديم بيئة محاكاة تفاعلية تدمج بين الدقة الحسابية الفيزيائية والذكاء الاصطناعي التوجيهي، بما يتيح للطالب استكشاف الظواهر وفهم أسبابها وليس فقط حفظ قوانينها.
+              </p>
+            </div>
+
+            <!-- Target Audience -->
+            <div class="smoky-glass-panel" style="padding: var(--spacing-xl); margin-bottom: var(--spacing-xl);">
+              <h3 style="font-size: var(--text-lg); color: #FFFFFF; margin-bottom: var(--spacing-sm);">👥 الفئات المستهدفة</h3>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                <div style="background: rgba(28, 31, 36, 0.7); padding: var(--spacing-md); border-radius: var(--radius-md);">
+                  <div style="font-size: 24px; margin-bottom: 6px;">🎓</div>
+                  <h4 style="color: #FFFFFF; font-size: var(--text-sm); margin-bottom: 4px;">طلاب كليات الهندسة</h4>
+                  <p style="color: var(--text-secondary); font-size: var(--text-xs);">مساعد دراسي تطبيقي لاختبار الدوائر قبل تنفيذها معملياً والتأكد من صحة الحسابات.</p>
+                </div>
+                <div style="background: rgba(28, 31, 36, 0.7); padding: var(--spacing-md); border-radius: var(--radius-md);">
+                  <div style="font-size: 24px; margin-bottom: 6px;">🏫</div>
+                  <h4 style="color: #FFFFFF; font-size: var(--text-sm); margin-bottom: 4px;">المدارس والتعليم الأساسي</h4>
+                  <p style="color: var(--text-secondary); font-size: var(--text-xs);">معمل افتراضي متكامل للمدارس التي تفتقر لتجهيزات معملية متطورة أو ميزانيات صيانة.</p>
+                </div>
+                <div style="background: rgba(28, 31, 36, 0.7); padding: var(--spacing-md); border-radius: var(--radius-md);">
+                  <div style="font-size: 24px; margin-bottom: 6px;">💡</div>
+                  <h4 style="color: #FFFFFF; font-size: var(--text-sm); margin-bottom: 4px;">الهواة والمبتكرون (Makers)</h4>
+                  <p style="color: var(--text-secondary); font-size: var(--text-xs);">بيئة سريعة لاختبار النماذج الأولية والتوصيلات الإلكترونية بأعلى موثوقية.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- The Team -->
+            <div style="margin-top: var(--spacing-2xl);">
+              <h3 style="font-size: var(--text-lg); color: #FFFFFF; margin-bottom: var(--spacing-xs);">🌟 فريق عمل رواد المعمل</h3>
+              <p style="color: var(--text-secondary); font-size: var(--text-sm);">نخبة متميزة تجمع بين الشغف الهندسي والتطوير البرمجي الذكي</p>
+
+              <div class="team-grid">
+                <!-- Saqr -->
+                <div class="smoky-glass-panel team-card">
+                  <div class="team-avatar">🦅</div>
+                  <div class="team-name">صقر</div>
+                  <div class="team-role">هندسة الواجهة والأنظمة</div>
+                  <div class="team-desc">
+                    مسؤول عن بنية واجهة المستخدم، نظام التصميم الزجاجي، التوافق مع معايير الوصول العالمية والتنقل السلس.
+                  </div>
+                </div>
+
+                <!-- Team Lead -->
+                <div class="smoky-glass-panel team-card">
+                  <div class="team-avatar">👑</div>
+                  <div class="team-name">عُمر</div>
+                  <div class="team-role">قيادة الفريق والمرشد الذكي</div>
+                  <div class="team-desc">
+                    يقود التنسيق بين أعضاء الفريق ويطوّر سلوك المرشد الذكي ويساعد في تكامله مع المختبر.
+                  </div>
+                </div>
+
+                <!-- Zakariya -->
+                <div class="smoky-glass-panel team-card">
+                  <div class="team-avatar">🔬</div>
+                  <div class="team-name">زكريا</div>
+                  <div class="team-role">بحث المشكلة وتجربة المستخدم</div>
+                  <div class="team-desc">
+                    مسؤول عن دراسة المشكلة التعليمية، واختبار النموذج مع الطلاب، وإعداد الوثائق التعريفية للمشروع.
+                  </div>
+                </div>
+
+                <!-- Hamza -->
+                <div class="smoky-glass-panel team-card">
+                  <div class="team-avatar">📊</div>
+                  <div class="team-name">حمزة</div>
+                  <div class="team-role">التسويق والتصميم وتحليل الأعمال</div>
+                  <div class="team-desc">
+                    مسؤول عن تصميم الهوية والعروض التقديمية، وتحليل بيانات الاختبار ونموذج العمل (B2B)، وحملة النشر.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sheraa Hackathon 2026 Banner -->
+            <div class="sheraa-badge-banner">
+              <div style="font-size: 44px;">🚀</div>
+              <div>
+                <h4 style="font-size: var(--text-lg); color: var(--accent-orange); margin-bottom: 4px;">
+                  مشروع مشارك في هاكاثون شراع 2026
+                </h4>
+                <p style="color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6;">
+                  تم تطوير مشروع «رواد المعمل» بدقة وشغف لتمثيل روح الابتكار وريادة الأعمال التكنولوجية في هاكاثون شراع، لتقديم نموذج واقعي وقابل للتوسع يُحدث أثراً إيجابياً وملموساً في مستقبل التعليم العربي.
+                </p>
+              </div>
+            </div>
+          </article>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Main Application Logic & Persistent View Router -->
+  <script type="module">
+    import { simulate } from './src/domain/circuit/solver.js';
+    import { LocalMockTutorAdapter } from './src/integrations/tutor/mock-adapter.js';
+    import { ALLOWED_ROUTES, resolveRoute, navigate, setupRouter } from './src/ui/router.js';
+    import { routeAllWires, portSide, portLocalX } from './src/ui/wire-routing.js';
+    import {
+      createInitialLabState,
+      addComponent,
+      moveComponent,
+      commitMove,
+      removeComponent,
+      addWire,
+      removeWire,
+      clearAllWires,
+      clearCircuit,
+      toggleSwitch,
+      undo,
+      redo,
+      loadDefaultModelCircuit,
+      toLabSnapshot
+    } from './src/features/lab/lab-state.js';
+
+    // Application state
+    const labState = createInitialLabState();
+    let activeRoute = 'home';
+    let sidebarCollapsed = false;
+    let dragContext = null;
+
+    const tutorAdapter = new LocalMockTutorAdapter(labState.revision);
+
+    /* ==============================================================
+       1. ROUTING & PERSISTENT VIEWS LOGIC
+       ============================================================== */
+    function resetTransientState() {
+      labState.selectedPortId = null;
+      dragContext = null;
+      const tempWire = document.getElementById('tempWire');
+      if (tempWire) {
+        tempWire.style.display = 'none';
+        tempWire.setAttribute('d', '');
+      }
+      const hintEl = document.getElementById('canvasHint');
+      if (hintEl) {
+        hintEl.textContent = labState.components.length === 0
+          ? 'ابدأ بإضافة القطع من صندوق الأدوات؛ لوحة المختبر فارغة ويمكنك بناء الدائرة بنفسك.'
+          : 'انقر على منفذ البداية ثم منفذ النهاية لمد سلك. يمكنك تحريك القطع بالسحب أو الأسهم، أو تراجع/إعادة.';
+      }
+      document.querySelectorAll('.port-circle.selected').forEach(el => {
+        el.classList.remove('selected');
+      });
+    }
+
+    function switchView(targetRoute, fromRoute) {
+      if (fromRoute === 'lab' && targetRoute !== 'lab') {
+        resetTransientState();
+      }
+
+      ALLOWED_ROUTES.forEach(route => {
+        const viewEl = document.getElementById(`view-${route}`);
+        const navEl = document.getElementById(`navLink${route.charAt(0).toUpperCase() + route.slice(1)}`);
+        
+        if (viewEl) {
+          if (route === targetRoute) {
+            viewEl.hidden = false;
+            viewEl.classList.add('active');
+          } else {
+            viewEl.hidden = true;
+            viewEl.classList.remove('active');
+          }
+        }
+
+        if (navEl) {
+          if (route === targetRoute) {
+            navEl.classList.add('active');
+          } else {
+            navEl.classList.remove('active');
+          }
+        }
+      });
+
+      activeRoute = targetRoute;
+
+      if (targetRoute === 'lab') {
+        render();
+      }
+
+      const contentEl = document.getElementById('mainContent');
+      if (contentEl) {
+        contentEl.scrollTop = 0;
+      }
+
+      closeMobileDrawer();
+    }
+
+    setupRouter({
+      beforeNavigate: (from, to) => {
+        if (from === 'lab' && to !== 'lab') {
+          resetTransientState();
+        }
+        return true;
+      },
+      onNavigate: (to, from) => {
+        switchView(to, from);
+      }
+    });
+
+    function goToRoute(route) {
+      navigate(route, {
+        beforeNavigate: (from, to) => {
+          if (from === 'lab' && to !== 'lab') {
+            resetTransientState();
+          }
+          return true;
+        },
+        onNavigate: (to, from) => {
+          switchView(to, from);
+        }
+      });
+    }
+
+    /* ==============================================================
+       2. SIDEBAR & MOBILE DRAWER INTERACTIONS
+       ============================================================== */
+    const sidebar = document.getElementById('appSidebar');
+    const btnToggleSidebarCollapse = document.getElementById('btnToggleSidebarCollapse');
+    const collapseIcon = document.getElementById('collapseIcon');
+    const btnToggleMobileMenu = document.getElementById('btnToggleMobileMenu');
+    const drawerBackdrop = document.getElementById('drawerBackdrop');
+
+    function toggleSidebarCollapse() {
+      sidebarCollapsed = !sidebarCollapsed;
+      if (sidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        collapseIcon.textContent = '▶';
+      } else {
+        sidebar.classList.remove('collapsed');
+        collapseIcon.textContent = '◀';
+      }
+    }
+
+    function openMobileDrawer() {
+      sidebar.classList.add('mobile-open');
+      drawerBackdrop.classList.add('active');
+    }
+
+    function closeMobileDrawer() {
+      sidebar.classList.remove('mobile-open');
+      drawerBackdrop.classList.remove('active');
+    }
+
+    btnToggleSidebarCollapse?.addEventListener('click', toggleSidebarCollapse);
+    btnToggleMobileMenu?.addEventListener('click', () => {
+      if (sidebar.classList.contains('mobile-open')) {
+        closeMobileDrawer();
+      } else {
+        openMobileDrawer();
+      }
+    });
+    drawerBackdrop?.addEventListener('click', closeMobileDrawer);
+
+    document.getElementById('btnHeaderLaunchLab')?.addEventListener('click', () => goToRoute('lab'));
+    document.getElementById('btnHeroGoLab')?.addEventListener('click', () => goToRoute('lab'));
+    document.getElementById('btnHeroGoExperiments')?.addEventListener('click', () => goToRoute('experiments'));
+    document.getElementById('btnHeroGoGuide')?.addEventListener('click', () => goToRoute('guide'));
+    document.getElementById('btnStartOhmsExperiment')?.addEventListener('click', () => {
+      // Starting the lesson does NOT supply a pre-wired answer.
+      goToRoute('lab');
+    });
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const route = btn.getAttribute('data-route');
+        if (route) goToRoute(route);
+      });
+    });
+
+    /* ==============================================================
+       3. LAB SIMULATION & CIRCUIT STATE LOGIC
+       ============================================================== */
+    // Wires are routed as a set so they avoid component bodies and each other.
+    function updateWiresVisuals() {
+      const wiresLayer = document.getElementById('wiresLayer');
+      if (!wiresLayer) return;
+      const routes = routeAllWires(labState.components, labState.wires);
+      wiresLayer.querySelectorAll('.wire-path').forEach(path => {
+        const route = routes.get(path.getAttribute('data-wire-id'));
+        if (route) path.setAttribute('d', route.d);
+      });
+    }
+
+    function updateToolbarState() {
+      const btnUndo = document.getElementById('btnUndo');
+      const btnRedo = document.getElementById('btnRedo');
+      const btnDelete = document.getElementById('btnDeleteComponent');
+      const btnSwitch = document.getElementById('btnToggleSwitch');
+      const swLabel = document.getElementById('switchStatusLabel');
+
+      if (btnUndo) {
+        const canUndo = labState.history.length > 0;
+        btnUndo.disabled = !canUndo;
+        btnUndo.style.opacity = canUndo ? '1' : '0.45';
+        btnUndo.style.cursor = canUndo ? 'pointer' : 'not-allowed';
+      }
+      if (btnRedo) {
+        const canRedo = labState.future.length > 0;
+        btnRedo.disabled = !canRedo;
+        btnRedo.style.opacity = canRedo ? '1' : '0.45';
+        btnRedo.style.cursor = canRedo ? 'pointer' : 'not-allowed';
+      }
+      if (btnDelete) {
+        const hasSelection = Boolean(labState.selectedComponentId);
+        btnDelete.disabled = !hasSelection;
+        btnDelete.style.opacity = hasSelection ? '1' : '0.45';
+        btnDelete.style.cursor = hasSelection ? 'pointer' : 'not-allowed';
+      }
+      if (btnSwitch && swLabel) {
+        const sw = labState.components.find(c => c.kind === 'switch');
+        if (!sw) {
+          btnSwitch.disabled = true;
+          btnSwitch.style.opacity = '0.45';
+          btnSwitch.style.cursor = 'not-allowed';
+          swLabel.textContent = 'المفتاح (غير موجود)';
+        } else {
+          btnSwitch.disabled = false;
+          btnSwitch.style.opacity = '1';
+          btnSwitch.style.cursor = 'pointer';
+          swLabel.textContent = sw.isOpen ? 'المفتاح (مفتوح)' : 'المفتاح (مغلق)';
+        }
+      }
+    }
+
+    function render() {
+      updateToolbarState();
+      const emptyGuide = document.getElementById('emptyCanvasGuide');
+      if (emptyGuide) emptyGuide.style.display = labState.components.length === 0 ? '' : 'none';
+
+      // 1. Render Wires
+      const wiresLayer = document.getElementById('wiresLayer');
+      if (!wiresLayer) return;
+      wiresLayer.innerHTML = '';
+      const wireRoutes = routeAllWires(labState.components, labState.wires);
+      labState.wires.forEach(wire => {
+        const route = wireRoutes.get(wire.id);
+        if (!route) return;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', route.d);
+        path.setAttribute('class', 'wire-path');
+        path.setAttribute('data-wire-id', wire.id);
+        path.setAttribute('tabindex', '0');
+        path.setAttribute('role', 'button');
+        path.setAttribute('aria-label', `سلك توصيل بين المنفذ ${wire.fromPortId} و ${wire.toPortId}. انقر لحذف السلك.`);
+
+        path.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeWire(labState, wire.id);
+          render();
+        });
+        path.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ' || e.key === 'Delete' || e.key === 'Backspace') {
+            e.preventDefault();
+            removeWire(labState, wire.id);
+            render();
+          }
+        });
+
+        wiresLayer.appendChild(path);
+      });
+
+      // 2. Render Components
+      const compLayer = document.getElementById('componentsLayer');
+      if (!compLayer) return;
+      compLayer.innerHTML = '';
+      labState.components.forEach(comp => {
+        const isSelected = labState.selectedComponentId === comp.id;
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', `component-group ${isSelected ? 'selected' : ''}`);
+        g.setAttribute('transform', `translate(${comp.position.x}, ${comp.position.y})`);
+        g.setAttribute('tabindex', '0');
+        g.setAttribute('role', 'button');
+        g.setAttribute('aria-label', `${comp.name}. اضغط للتحديد أو اسحب للتحريك أو استخدم الأسهم.`);
+        g.setAttribute('data-comp-id', comp.id);
+
+        // Box
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('class', 'component-rect');
+        rect.setAttribute('width', '120');
+        rect.setAttribute('height', '80');
+        g.appendChild(rect);
+
+        // Title
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', '60');
+        text.setAttribute('y', '35');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', '#DCE1E7');
+        text.setAttribute('font-size', '13');
+        text.setAttribute('font-weight', '600');
+        text.setAttribute('pointer-events', 'none');
+        text.textContent = comp.name;
+        g.appendChild(text);
+
+        // LED Indicator Circle
+        if (comp.kind === 'led') {
+          const glow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          glow.setAttribute('cx', '60');
+          glow.setAttribute('cy', '55');
+          glow.setAttribute('r', '14');
+          glow.setAttribute('id', 'ledGlowIndicator');
+          glow.setAttribute('fill', 'rgba(255, 129, 44, 0.15)');
+          glow.setAttribute('pointer-events', 'none');
+          g.appendChild(glow);
+        }
+
+        // Switch State visual
+        if (comp.kind === 'switch') {
+          const swText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          swText.setAttribute('x', '60');
+          swText.setAttribute('y', '55');
+          swText.setAttribute('text-anchor', 'middle');
+          swText.setAttribute('fill', comp.isOpen ? '#FBBF24' : '#34D399');
+          swText.setAttribute('font-size', '11');
+          swText.setAttribute('font-weight', '700');
+          swText.setAttribute('pointer-events', 'none');
+          swText.textContent = comp.isOpen ? '⚡ [مفتوح]' : '⚡ [مغلق]';
+          g.appendChild(swText);
+        }
+
+        // Ports
+        comp.ports.forEach((port, idx) => {
+          const px = portLocalX(comp, idx);
+          const py = 40;
+          const onLeft = portSide(comp, idx) === 'left';
+
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('class', `port-circle ${labState.selectedPortId === port.id ? 'selected' : ''}`);
+          circle.setAttribute('cx', String(px));
+          circle.setAttribute('cy', String(py));
+          circle.setAttribute('r', '6');
+          circle.setAttribute('tabindex', '0');
+          circle.setAttribute('aria-label', `منفذ ${port.label} في ${comp.name}`);
+
+          circle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onPortClick(port.id);
+          });
+          circle.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              onPortClick(port.id);
+            }
+          });
+
+          g.appendChild(circle);
+
+          // Port Label
+          const pLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          pLabel.setAttribute('x', String(px + (onLeft ? 12 : -12)));
+          pLabel.setAttribute('y', String(py + 4));
+          pLabel.setAttribute('fill', '#9DA7B3');
+          pLabel.setAttribute('font-size', '10');
+          pLabel.setAttribute('text-anchor', onLeft ? 'start' : 'end');
+          pLabel.setAttribute('pointer-events', 'none');
+          pLabel.textContent = port.label;
+          g.appendChild(pLabel);
+        });
+
+        // Pointer Drag & Drop for component
+        g.addEventListener('pointerdown', (e) => {
+          if (e.target.classList.contains('port-circle')) return;
+
+          labState.selectedComponentId = comp.id;
+          updateToolbarState();
+
+          const svg = document.getElementById('circuitCanvas');
+          if (!svg) return;
+
+          const pt = svg.createSVGPoint();
+          pt.x = e.clientX;
+          pt.y = e.clientY;
+          const svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+          dragContext = {
+            componentId: comp.id,
+            startPos: { x: comp.position.x, y: comp.position.y },
+            offset: { x: svgPt.x - comp.position.x, y: svgPt.y - comp.position.y },
+            hasMoved: false,
+            pointerId: e.pointerId
+          };
+
+          try {
+            g.setPointerCapture(e.pointerId);
+          } catch (_) {}
+          g.classList.add('dragging');
+          e.stopPropagation();
+        });
+
+        g.addEventListener('pointermove', (e) => {
+          if (!dragContext || dragContext.componentId !== comp.id) return;
+
+          const svg = document.getElementById('circuitCanvas');
+          if (!svg) return;
+
+          const pt = svg.createSVGPoint();
+          pt.x = e.clientX;
+          pt.y = e.clientY;
+          const svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+          const newX = svgPt.x - dragContext.offset.x;
+          const newY = svgPt.y - dragContext.offset.y;
+
+          const moved = moveComponent(labState, comp.id, { x: newX, y: newY });
+          if (moved) {
+            dragContext.hasMoved = true;
+            g.setAttribute('transform', `translate(${comp.position.x}, ${comp.position.y})`);
+            updateWiresVisuals();
+          }
+        });
+
+        const endDrag = (e) => {
+          if (!dragContext || dragContext.componentId !== comp.id) return;
+          try {
+            g.releasePointerCapture(e.pointerId);
+          } catch (_) {}
+          g.classList.remove('dragging');
+
+          if (dragContext.hasMoved) {
+            commitMove(labState, dragContext.startPos, comp.position);
+          }
+          dragContext = null;
+          render();
+        };
+
+        g.addEventListener('pointerup', endDrag);
+        g.addEventListener('pointercancel', endDrag);
+
+        g.addEventListener('click', (e) => {
+          if (e.target.classList.contains('port-circle')) return;
+          labState.selectedComponentId = comp.id;
+          render();
+        });
+
+        compLayer.appendChild(g);
+      });
+
+      // 3. Run Simulation
+      runSimulation();
+    }
+
+    function onPortClick(portId) {
+      if (!labState.selectedPortId) {
+        labState.selectedPortId = portId;
+        const hintEl = document.getElementById('canvasHint');
+        if (hintEl) hintEl.textContent = 'تم اختيار منفذ البداية. انقر على المنفذ المستهدف لإتمام السلك.';
+        render();
+      } else {
+        if (labState.selectedPortId !== portId) {
+          addWire(labState, labState.selectedPortId, portId);
+          const hintEl = document.getElementById('canvasHint');
+          if (hintEl) hintEl.textContent = 'تم التوصيل بنجاح! يمكنك إضافة أسلاك أخرى أو تبديل المفتاح أو تراجع.';
+        } else {
+          labState.selectedPortId = null;
+        }
+        render();
+      }
+    }
+
+    // Click canvas background to deselect
+    document.getElementById('circuitCanvas')?.addEventListener('click', (e) => {
+      if (e.target.id === 'circuitCanvas' || e.target.id === 'gridLayer') {
+        labState.selectedComponentId = null;
+        labState.selectedPortId = null;
+        render();
+      }
+    });
+
+    // Global Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+      // Undo: Ctrl+Z / Cmd+Z
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          if (redo(labState)) render();
+        } else {
+          e.preventDefault();
+          if (undo(labState)) render();
+        }
+        return;
+      }
+
+      // Redo: Ctrl+Y / Cmd+Y
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        if (redo(labState)) render();
+        return;
+      }
+
+      // Delete / Backspace: Remove selected component
+      if ((e.key === 'Delete' || e.key === 'Backspace') && labState.selectedComponentId) {
+        e.preventDefault();
+        removeComponent(labState, labState.selectedComponentId);
+        render();
+        return;
+      }
+
+      // Escape: Deselect port or component
+      if (e.key === 'Escape') {
+        if (labState.selectedPortId) {
+          labState.selectedPortId = null;
+          render();
+        } else if (labState.selectedComponentId) {
+          labState.selectedComponentId = null;
+          render();
+        }
+        return;
+      }
+
+      // Arrow keys: Move selected component
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) && labState.selectedComponentId) {
+        e.preventDefault();
+        const comp = labState.components.find(c => c.id === labState.selectedComponentId);
+        if (!comp) return;
+
+        const step = e.shiftKey ? 30 : 10;
+        const prevPos = { x: comp.position.x, y: comp.position.y };
+        let deltaX = 0;
+        let deltaY = 0;
+
+        if (e.key === 'ArrowLeft') deltaX = -step;
+        if (e.key === 'ArrowRight') deltaX = step;
+        if (e.key === 'ArrowUp') deltaY = -step;
+        if (e.key === 'ArrowDown') deltaY = step;
+
+        const moved = moveComponent(labState, comp.id, {
+          x: comp.position.x + deltaX,
+          y: comp.position.y + deltaY
+        });
+
+        if (moved) {
+          commitMove(labState, prevPos, comp.position);
+          render();
+        }
+      }
+    });
+
+    async function runSimulation() {
+      const snapshot = toLabSnapshot(labState);
+
+      // Strict requirement: USE textContent INSTEAD OF innerHTML FOR MEASUREMENTS!
+      const currentEl = document.getElementById('valCurrent');
+      const vrEl = document.getElementById('valVr');
+      const ledStatus = document.getElementById('ledStateIndicator');
+      const circuitBadge = document.getElementById('circuitBadge');
+      const ledGlow = document.getElementById('ledGlowIndicator');
+      const tutorBox = document.getElementById('tutorMessageBox');
+
+      if (!currentEl || !vrEl || !ledStatus || !circuitBadge) return;
+
+      if (labState.components.length === 0) {
+        circuitBadge.className = 'status-badge status-badge-open';
+        circuitBadge.textContent = 'المختبر فارغ';
+        currentEl.textContent = '—';
+        vrEl.textContent = '—';
+        ledStatus.textContent = 'مطفأ (OFF)';
+        ledStatus.style.color = 'var(--text-muted)';
+        if (ledGlow) {
+          ledGlow.setAttribute('fill', 'rgba(255, 129, 44, 0.15)');
+          ledGlow.classList.remove('led-glow-active');
+        }
+        if (tutorBox) tutorBox.textContent = 'ابدأ بإضافة البطارية والمقاومة وLED والمفتاح، ثم صِل المنافذ بنفسك. إن احتجت مساعدة اضغط «الدائرة النموذجية».';
+        return;
+      }
+
+      const sim = simulate(snapshot);
+      const simulatedRevision = labState.revision;
+      if (sim.status === 'valid') {
+        circuitBadge.className = 'status-badge status-badge-valid';
+        circuitBadge.textContent = 'دائرة سليمة نشطة';
+        currentEl.textContent = (sim.values.circuitCurrentA * 1000).toFixed(2);
+        vrEl.textContent = (sim.values.resistorVoltageV).toFixed(2);
+        ledStatus.textContent = 'مضيء (ON)';
+        ledStatus.style.color = 'var(--accent-orange)';
+        if (ledGlow) {
+          ledGlow.setAttribute('fill', 'url(#ledGlow)');
+          ledGlow.classList.add('led-glow-active');
+        }
+      } else if (sim.status === 'open') {
+        circuitBadge.className = 'status-badge status-badge-open';
+        circuitBadge.textContent = 'دائرة مفتوحة';
+        currentEl.textContent = '0.00';
+        vrEl.textContent = sim.values.resistorVoltageV === null ? 'غير محسوب' : sim.values.resistorVoltageV.toFixed(2);
+        ledStatus.textContent = 'مطفأ (OFF)';
+        ledStatus.style.color = 'var(--text-muted)';
+        if (ledGlow) {
+          ledGlow.setAttribute('fill', 'rgba(255, 129, 44, 0.15)');
+          ledGlow.classList.remove('led-glow-active');
+        }
+      } else if (sim.status === 'unsafe') {
+        circuitBadge.className = 'status-badge status-badge-unsafe';
+        circuitBadge.textContent = 'حالة غير آمنة!';
+        currentEl.textContent = 'غير محسوب';
+        vrEl.textContent = 'غير محسوب';
+        ledStatus.textContent = 'معطل للحماية';
+        ledStatus.style.color = 'var(--state-error)';
+        if (ledGlow) {
+          ledGlow.setAttribute('fill', 'rgba(243, 133, 148, 0.3)');
+          ledGlow.classList.remove('led-glow-active');
+        }
+      } else if (sim.status === 'unsupported') {
+        circuitBadge.className = 'status-badge status-badge-unsafe';
+        circuitBadge.textContent = 'توصيل غير مدعوم';
+        currentEl.textContent = 'غير محسوب';
+        vrEl.textContent = 'غير محسوب';
+        ledStatus.textContent = 'مطفأ (OFF)';
+        ledStatus.style.color = 'var(--state-error)';
+        if (ledGlow) {
+          ledGlow.setAttribute('fill', 'rgba(243, 133, 148, 0.2)');
+          ledGlow.classList.remove('led-glow-active');
+        }
+      }
+
+      // Update AI Tutor
+      if (tutorBox) {
+        try {
+          tutorAdapter.setSnapshotRevision(labState.revision);
+          const hint = await tutorAdapter.getHint({
+            contractVersion: '1.0.0',
+            requestId: 'req-' + Date.now(),
+            snapshotRevision: labState.revision,
+            experimentId: 'ohms-law-led',
+            stepId: 'run',
+            locale: 'ar',
+            evidence: {
+              modelVersion: '1.0.0',
+              status: sim.status,
+              diagnostics: sim.diagnostics,
+              measurements: sim.values,
+              knownComponentIds: labState.components.map(c => c.id)
+            }
+          });
+          if (simulatedRevision === labState.revision) {
+            tutorBox.textContent = hint.message;
+            // The tutor may point at a part (only after the student has been stuck for a while).
+            if (hint.suggestedAction?.kind === 'highlight') {
+              const target = [...document.querySelectorAll('#componentsLayer [data-comp-id]')]
+                .find(el => el.getAttribute('data-comp-id') === hint.suggestedAction.targetId);
+              if (target) target.classList.add('tutor-highlight');
+            }
+          }
+        } catch (err) {
+          if (simulatedRevision === labState.revision) {
+            tutorBox.textContent = sim.diagnostics[0]?.messageAr || 'افحص سلامة التوصيل وتأكد من اكتمال الحلقة.';
+          }
+        }
+      }
+    }
+
+    // Switch toggle
+    document.getElementById('btnToggleSwitch')?.addEventListener('click', () => {
+      if (toggleSwitch(labState)) {
+        render();
+      }
+    });
+
+    // Undo action
+    document.getElementById('btnUndo')?.addEventListener('click', () => {
+      if (undo(labState)) {
+        render();
+      }
+    });
+
+    // Redo action
+    document.getElementById('btnRedo')?.addEventListener('click', () => {
+      if (redo(labState)) {
+        render();
+      }
+    });
+
+    // Delete Component action
+    document.getElementById('btnDeleteComponent')?.addEventListener('click', () => {
+      if (labState.selectedComponentId) {
+        removeComponent(labState, labState.selectedComponentId);
+        render();
+      }
+    });
+
+    // Reset wires
+    document.getElementById('btnReset')?.addEventListener('click', () => {
+      clearAllWires(labState);
+      resetTransientState();
+      render();
+    });
+
+    // An example is shown ONLY on explicit request; preserve student's work on cancellation.
+    document.getElementById('btnReloadDefault')?.addEventListener('click', () => {
+      if ((labState.components.length || labState.wires.length) &&
+          !window.confirm('سيتم استبدال دائرتك بالدائرة النموذجية. يمكنك التراجع بعد ذلك. هل تريد المتابعة؟')) return;
+      loadDefaultModelCircuit(labState);
+      resetTransientState();
+      render();
+    });
+
+    // Start a completely new exercise without erasing the undo history.
+    document.getElementById('btnClearCircuit')?.addEventListener('click', () => {
+      if (!labState.components.length && !labState.wires.length) return;
+      if (!window.confirm('هل تريد مسح جميع المكونات والأسلاك؟ يمكنك التراجع عن هذه الخطوة.')) return;
+      if (clearCircuit(labState)) {
+        resetTransientState();
+        render();
+      }
+    });
+
+    // Toolbox add buttons
+    document.getElementById('btnAddBattery')?.addEventListener('click', () => {
+      if (!labState.components.some(c => c.kind === 'dc_source')) {
+        addComponent(labState, {
+          id: 'bat-1',
+          kind: 'dc_source',
+          name: 'بطارية (5V)',
+          position: { x: 40, y: 170 },
+          rotation: 0,
+          voltageV: 5.0,
+          ports: [
+            { id: 'p_bat_pos', componentId: 'bat-1', role: 'positive', label: '+' },
+            { id: 'p_bat_neg', componentId: 'bat-1', role: 'negative', label: '-' }
+          ]
+        });
+        render();
+      }
+    });
+
+    document.getElementById('btnAddResistor')?.addEventListener('click', () => {
+      if (!labState.components.some(c => c.kind === 'resistor')) {
+        addComponent(labState, {
+          id: 'res-1',
+          kind: 'resistor',
+          name: 'مقاومة (330Ω)',
+          position: { x: 220, y: 70 },
+          rotation: 0,
+          resistanceOhms: 330.0,
+          ports: [
+            { id: 'p_res_a', componentId: 'res-1', role: 'terminal_a', label: '1' },
+            { id: 'p_res_b', componentId: 'res-1', role: 'terminal_b', label: '2' }
+          ]
+        });
+        render();
+      }
+    });
+
+    document.getElementById('btnAddLed')?.addEventListener('click', () => {
+      if (!labState.components.some(c => c.kind === 'led')) {
+        addComponent(labState, {
+          id: 'led-1',
+          kind: 'led',
+          name: 'صمام LED',
+          position: { x: 470, y: 170 },
+          rotation: 0,
+          forwardVoltageV: 2.0,
+          maxCurrentA: 0.02,
+          ports: [
+            { id: 'p_led_anode', componentId: 'led-1', role: 'anode', label: 'A' },
+            { id: 'p_led_cathode', componentId: 'led-1', role: 'cathode', label: 'K' }
+          ]
+        });
+        render();
+      }
+    });
+
+    document.getElementById('btnAddSwitch')?.addEventListener('click', () => {
+      if (!labState.components.some(c => c.kind === 'switch')) {
+        addComponent(labState, {
+          id: 'sw-1',
+          kind: 'switch',
+          name: 'مفتاح تشغيل',
+          position: { x: 470, y: 360 },
+          rotation: 0,
+          isOpen: false,
+          ports: [
+            { id: 'p_sw_a', componentId: 'sw-1', role: 'terminal_a', label: '1' },
+            { id: 'p_sw_b', componentId: 'sw-1', role: 'terminal_b', label: '2' }
+          ]
+        });
+        render();
+      }
+    });
+
+    // Initialize application with a completely empty lab; the example is opt-in.
+    const initialRoute = resolveRoute(window.location.hash);
+    switchView(initialRoute, null);
+
+    /* ==============================================================
+       6. LIVE GEMINI AI TUTOR & RESISTOR VALUE SELECTOR
+       ============================================================== */
+    async function askLiveAiTutor(questionText = '') {
+      const tutorBox = document.getElementById('tutorMessageBox');
+      const modeBadge = document.getElementById('tutorModeBadge');
+      const sendBtn = document.getElementById('btnSendTutorQ');
+      if (!tutorBox) return;
+
+      const snapshot = toLabSnapshot(labState);
+      const sim = labState.components.length > 0
+        ? simulate(snapshot)
+        : { status: 'open', diagnostics: [{ code: 'OPEN_CIRCUIT', affectedIds: [] }], values: { sourceVoltageV: null, circuitCurrentA: null, resistorVoltageV: null, ledForwardVoltageV: null } };
+
+      const payload = {
+        contractVersion: '1.0.0',
+        requestId: 'req-' + Date.now(),
+        snapshotRevision: labState.revision,
+        experimentId: 'ohms-law-led',
+        stepId: 'interactive-ai',
+        locale: 'ar',
+        question: questionText.trim(),
+        evidence: {
+          modelVersion: '1.0.0',
+          status: sim.status,
+          diagnostics: sim.diagnostics,
+          measurements: sim.values,
+          knownComponentIds: labState.components.map(c => c.id)
+        }
+      };
+
+      const prevText = tutorBox.textContent;
+      tutorBox.textContent = 'جاري التحليل عبر Gemini AI...';
+      if (sendBtn) sendBtn.disabled = true;
+
+      try {
+        const resp = await fetch('/.netlify/functions/tutor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) throw new Error('API_UNAVAILABLE');
+        const data = await resp.json();
+        if (data && data.message) {
+          tutorBox.style.whiteSpace = 'pre-line';
+          tutorBox.textContent = data.message;
+          if (modeBadge) {
+            modeBadge.textContent = 'متصل بـ Gemini AI';
+            modeBadge.style.color = '#7EE787';
+            modeBadge.style.borderColor = 'rgba(126,231,135,0.4)';
+          }
+          return;
+        }
+        throw new Error('EMPTY_AI_RESPONSE');
+      } catch (_err) {
+        try {
+          tutorAdapter.setSnapshotRevision(labState.revision);
+          const localHint = await tutorAdapter.getHint(payload);
+          tutorBox.style.whiteSpace = 'pre-line';
+          tutorBox.textContent = questionText
+            ? `${localHint.message}\n(وضع محلي احتياطي: للأسئلة الحرة الكاملة فعّل GEMINI_API_KEY في Netlify)`
+            : localHint.message;
+        } catch (_fallbackErr) {
+          tutorBox.textContent = prevText;
+        }
+        if (modeBadge) {
+          modeBadge.textContent = 'وضع محلي احتياطي';
+          modeBadge.style.color = 'var(--accent-orange)';
+        }
+      } finally {
+        if (sendBtn) sendBtn.disabled = false;
+      }
+    }
+
+    document.getElementById('btnAskAiAnalyze')?.addEventListener('click', () => {
+      askLiveAiTutor('');
+    });
+
+    document.querySelectorAll('.quick-q-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const q = btn.getAttribute('data-q') || '';
+        const input = document.getElementById('tutorQuestionInput');
+        if (input) input.value = q;
+        askLiveAiTutor(q);
+      });
+    });
+
+    document.getElementById('tutorQuestionForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('tutorQuestionInput');
+      const q = input?.value?.trim() || '';
+      if (!q) return;
+      askLiveAiTutor(q);
+      if (input) input.value = '';
+    });
+
+    // Live Resistor Value Switcher (100Ω / 330Ω / 1kΩ)
+    document.querySelectorAll('.res-val-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ohms = Number(btn.getAttribute('data-ohms'));
+        if (!Number.isFinite(ohms)) return;
+        document.querySelectorAll('.res-val-btn').forEach(b => {
+          b.style.borderColor = '';
+          b.style.background = '';
+        });
+        btn.style.borderColor = ohms === 100 ? 'var(--state-error)' : 'var(--accent-orange)';
+        btn.style.background = ohms === 100 ? 'rgba(243,133,148,0.18)' : 'rgba(255,129,44,0.18)';
+
+        const resComp = labState.components.find(c => c.kind === 'resistor');
+        if (resComp) {
+          resComp.resistanceOhms = ohms;
+          resComp.name = ohms >= 1000 ? `مقاومة (${ohms / 1000}kΩ)` : `مقاومة (${ohms}Ω)`;
+          labState.revision += 1;
+          render();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

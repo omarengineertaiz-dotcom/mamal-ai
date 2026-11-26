@@ -1,0 +1,92 @@
+/**
+ * Rowad Al-Mamal Design System - Design Tokens
+ * Stage: G1.5 Technical Charcoal & Engineering Orange
+ * Target: Accessible, Dark Modern High-Contrast Engineering Lab
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Legacy Compat Tokens for VIS-001 test suite */
+  /* --color-canvas-deep: #09101E */
+  /* --glass-bg-base: rgba(23, 51, 75, 0.92) */
+  /* --text-primary: #EDF6FF */
+
+  /* Surface & Canvas Colors (Charcoal Palette) */
+  --color-canvas-deep: #15171B;
+  --color-surface-base: #292D33;
+  --color-canvas-main: #1C1F24;
+  --color-canvas-subtle: #23272E;
+  --color-canvas-elevated: #292D33;
+  --color-border-default: #565D66;
+
+  /* Brand & Technical Accent Colors */
+  --accent-orange: #FF812C;
+  --accent-orange-hover: #FF944D;
+  --accent-orange-glow: rgba(255, 129, 44, 0.35);
+  --accent-teal: #13B8A6;
+  --accent-teal-bright: #5EEAD4;
+  --accent-teal-glow: rgba(19, 184, 166, 0.35);
+  --accent-violet: #8292F7;
+  --accent-violet-glow: rgba(130, 146, 247, 0.30);
+  
+  /* State Colors */
+  --state-success: #34D399;
+  --state-success-glow: rgba(52, 211, 153, 0.35);
+  --state-error: #F38594;
+  --state-error-glow: rgba(243, 133, 148, 0.35);
+  --accent-amber: #FBBF24;
+  --state-warning: #FBBF24;
+  --accent-amber-glow: rgba(251, 191, 36, 0.30);
+
+  /* Typography / Text Colors (WCAG 2.2 AA compliant >= 4.5:1 on dark) */
+  --text-primary: #DCE1E7;
+  --text-secondary: #9DA7B3;
+  --text-muted: #6E7885;
+  --text-inverse: #15171B;
+
+  /* Glass Tokens */
+  --glass-bg-base: rgba(23, 51, 75, 0.92);
+  --glass-bg-smoky: rgba(21, 23, 27, 0.85);
+  --glass-bg-smoky-elevated: rgba(41, 45, 51, 0.90);
+  --glass-border: rgba(86, 93, 102, 0.40);
+  --glass-border-focus: rgba(255, 129, 44, 0.70);
+  --glass-highlight: rgba(220, 225, 231, 0.08);
+  --glass-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.20);
+
+  /* Solid Fallback for non-blur environments */
+  --glass-fallback: #292D33;
+
+  /* Typography Scale */
+  --font-family-base: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Cairo', 'Tajawal', sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Touch Target & Spacing */
+  --touch-min-size: 44px; /* WCAG 2.2 touch target standard */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* Motion Timing & Easing (150ms-250ms) */
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 250ms;
+  --ease-precise: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

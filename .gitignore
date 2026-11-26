@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables & secrets
+.env
+.env.*
+*.key
+*.pem
+*.cert
+
+# Logs & temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*~
+
+# Build & output artifacts (preserve handoff zip)
+dist/*
+!dist/Rowad_AlMamal_G2.5_Handoff.zip

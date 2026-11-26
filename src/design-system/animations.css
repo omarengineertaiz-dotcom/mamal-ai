@@ -1,0 +1,92 @@
+/**
+ * Rowad Al-Mamal Design System - Animations & Micro-interactions
+ * Complies with strict 150-250ms fast-interaction budget and prefers-reduced-motion
+ */
+
+@import './tokens.css';
+
+/* Keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px var(--accent-orange-glow));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px var(--accent-orange));
+  }
+}
+
+@keyframes wirePulse {
+  0% {
+    stroke-dashoffset: 24;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Animation utility classes (all 150ms-250ms) */
+.animate-fade-in {
+  animation: fadeIn var(--duration-normal) var(--ease-precise) forwards;
+}
+
+.view-transition {
+  animation: fadeIn var(--duration-fast) var(--ease-precise) forwards;
+}
+
+.led-glow-active {
+  animation: pulseGlow 1.8s infinite ease-in-out;
+}
+
+.wire-active {
+  stroke-dasharray: 6, 6;
+  animation: wirePulse 1.2s linear infinite;
+}
+
+/* Reduced Motion Compliance (Strict WCAG 2.2 Requirement) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .led-glow-active {
+    animation: none !important;
+    filter: drop-shadow(0 0 8px var(--accent-orange-glow)) !important;
+  }
+
+  .wire-active {
+    animation: none !important;
+    stroke-dasharray: none !important;
+  }
+
+  .animate-fade-in,
+  .view-transition {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
