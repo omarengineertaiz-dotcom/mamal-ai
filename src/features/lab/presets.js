@@ -305,7 +305,7 @@ export function getSchematicSymbolMarkup(comp, isLit = false, logicVal = 0) {
         ? `<line x1="12" y1="40" x2="40" y2="40" stroke="${stroke}" stroke-width="2"/><circle cx="42" cy="40" r="3.5" fill="#F59E0B"/><line x1="44" y1="38" x2="75" y2="23" stroke="#F59E0B" stroke-width="2.8" stroke-linecap="round"/><circle cx="78" cy="40" r="3.5" fill="${stroke}"/><line x1="80" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>`
         : `<line x1="12" y1="40" x2="40" y2="40" stroke="${stroke}" stroke-width="2"/><circle cx="42" cy="40" r="3.5" fill="#10B981"/><line x1="42" y1="40" x2="78" y2="40" stroke="#10B981" stroke-width="3" stroke-linecap="round"/><circle cx="78" cy="40" r="3.5" fill="#10B981"/><line x1="80" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/>`;
     case 'led': {
-      const col = comp.ledColor || '#FF4D4F';
+      const col = (typeof comp.ledColor === 'string' && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(comp.ledColor.trim())) ? comp.ledColor.trim() : '#FF4D4F';
       return `<line x1="12" y1="40" x2="46" y2="40" stroke="${stroke}" stroke-width="2"/><polygon points="46,28 46,52 70,40" fill="${isLit ? col : 'none'}" stroke="${col}" stroke-width="2.2"/><line x1="70" y1="28" x2="70" y2="52" stroke="${col}" stroke-width="2.5"/><line x1="70" y1="40" x2="108" y2="40" stroke="${stroke}" stroke-width="2"/><line x1="60" y1="24" x2="68" y2="16" stroke="${col}" stroke-width="1.6"/><line x1="68" y1="26" x2="76" y2="18" stroke="${col}" stroke-width="1.6"/>`;
     }
     case 'diode':

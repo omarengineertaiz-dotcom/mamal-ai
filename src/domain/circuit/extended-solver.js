@@ -1,7 +1,7 @@
 /**
- * Mamal AI v3.1.3 - Extended Educational Circuit Solver (Analog MNA + Digital Logic Engine)
+ * Mamal AI v3.1.4 - Extended Educational Circuit Solver (Analog MNA + Nonlinear Diode/LED + Digital Logic Engine)
  * Computes node voltages, total current, Req, exact activeCompIds, activeWireIds,
- * AND evaluates Digital Logic networks (LOGIC_INPUT -> Gates -> LOGIC_PROBE).
+ * enforces Diode/LED forward polarity & Vf threshold, and evaluates Digital Logic networks.
  */
 
 export function formatCurrent(amps) {
@@ -35,7 +35,6 @@ export function evaluateDigitalNetwork(components, wires) {
   const digitalComps = components.filter((c) => DIGITAL_KINDS.has(c.kind));
   if (digitalComps.length === 0) return { logicStates: {}, highWireIds: [], hasDigital: false };
 
-  // Build port-to-port net adjacency via union-find
   const portIds = new Set();
   for (const c of components) for (const p of c.ports || []) portIds.add(p.id);
   const parent = new Map([...portIds].map((id) => [id, id]));
@@ -50,10 +49,9 @@ export function evaluateDigitalNetwork(components, wires) {
     }
   }
 
-  const netValue = new Map(); // netRoot -> 0 | 1
+  const netValue = new Map();
   const logicStates = {};
 
-  // Seed logic inputs
   for (const c of digitalComps) {
     if (c.kind === 'logic_input') {
       const val = c.logicValue ? 1 : 0;
@@ -62,7 +60,6 @@ export function evaluateDigitalNetwork(components, wires) {
     }
   }
 
-  // Iterative propagation (up to 12 passes handles deep multi-gate chains)
   for (let pass = 0; pass < 12; pass++) {
     let changed = false;
     for (const c of digitalComps) {
@@ -94,14 +91,12 @@ export function evaluateDigitalNetwork(components, wires) {
     if (!changed) break;
   }
 
-  // Read probe states
   for (const c of digitalComps) {
     if (c.kind === 'logic_probe' && c.ports[0]) {
       logicStates[c.id] = netValue.get(find(c.ports[0].id)) ?? 0;
     }
   }
 
-  // Highlight wires on HIGH (1) nets
   const highWireIds = [];
   for (const w of wires) {
     if (parent.has(w.fromPortId) && netValue.get(find(w.fromPortId)) === 1) {
@@ -132,13 +127,36 @@ function findEnergizedWireIds(components, wires, find, activeCompIds) {
   return energized;
 }
 
+function getDiodePorts(comp) {
+  const anode = comp.ports.find((p) => p.role === 'anode') || comp.ports[0];
+  const cathode = comp.ports.find((p) => p.role === 'cathode') || comp.ports[1];
+  return { anodeId: anode?.id, cathodeId: cathode?.id };
+}
+
+function collectModelNotes(analogComps) {
+  const notes = [];
+  if (analogComps.some((c) => c.kind === 'ac_source')) {
+    notes.push({
+      ar: 'مصدر AC يُحسب حالياً بالقيمة الفعّالة (Vrms) في التحليل المستقر.',
+      en: 'AC source is currently evaluated using its RMS equivalent (Vrms) in steady-state analysis.',
+    });
+  }
+  if (analogComps.some((c) => c.kind === 'capacitor' || c.kind === 'inductor')) {
+    notes.push({
+      ar: 'المكثف والملف يُحاكَيان بحالة التيار المستمر المستقرة (DC Steady-State: المكثف مفتوح، والملف موصل).',
+      en: 'Capacitors & inductors are modeled in DC Steady-State (C = open circuit, L = short circuit).',
+    });
+  }
+  return notes;
+}
+
 export function simulateExtended(snapshot) {
   const components = snapshot?.components || [];
   const wires = snapshot?.wires || [];
   const digital = evaluateDigitalNetwork(components, wires);
 
   const result = {
-    modelVersion: '3.1.3',
+    modelVersion: '3.1.4',
     status: 'open',
     values: {
       sourceVoltageV: null,
@@ -153,6 +171,7 @@ export function simulateExtended(snapshot) {
     activeWireIds: [...digital.highWireIds],
     logicStates: digital.logicStates,
     diagnostics: [],
+    modelNotes: [],
     isExtended: true,
   };
 
@@ -160,7 +179,6 @@ export function simulateExtended(snapshot) {
     (c) => c.kind === 'dc_source' || c.kind === 'ac_source' || c.kind === 'current_source'
   );
 
-  // Pure digital circuit (no analog source needed)
   if (sources.length === 0) {
     if (digital.hasDigital) {
       result.status = 'valid';
@@ -184,6 +202,8 @@ export function simulateExtended(snapshot) {
   }
 
   const analogComps = components.filter((c) => !DIGITAL_KINDS.has(c.kind));
+  result.modelNotes = collectModelNotes(analogComps);
+
   const ports = new Map();
   for (const c of analogComps) for (const p of c.ports || []) ports.set(p.id, { ...p, component: c });
 
@@ -241,44 +261,98 @@ export function simulateExtended(snapshot) {
   const size = nNodes + m;
   if (size <= 0) return result;
 
-  const A = Array.from({ length: size }, () => Array(size).fill(0));
-  const z = Array(size).fill(0);
-  for (let i = 0; i < nNodes; i++) A[i][i] += 1e-12;
+  const diodes = analogComps.filter((c) => (c.kind === 'led' || c.kind === 'diode') && c.ports.length >= 2);
+  const diodeConducting = new Map(diodes.map((d) => [d.id, false]));
+  const DIODE_R_ON = 10;
+  const DIODE_R_OFF = 1e9;
 
-  const stampResistor = (pA, pB, R) => {
-    const rVal = Math.max(0.01, Number(R) || 100);
-    const g = 1 / rVal;
-    const iA = netIdx.get(find(pA)) - 1;
-    const iB = netIdx.get(find(pB)) - 1;
-    if (iA >= 0) A[iA][iA] += g;
-    if (iB >= 0) A[iB][iB] += g;
-    if (iA >= 0 && iB >= 0) { A[iA][iB] -= g; A[iB][iA] -= g; }
+  const solvePass = () => {
+    const A = Array.from({ length: size }, () => Array(size).fill(0));
+    const z = Array(size).fill(0);
+    for (let i = 0; i < nNodes; i++) A[i][i] += 1e-12;
+
+    const stampResistor = (pA, pB, R) => {
+      const rVal = Math.max(0.01, Number(R) || 100);
+      const g = 1 / rVal;
+      const iA = netIdx.get(find(pA)) - 1;
+      const iB = netIdx.get(find(pB)) - 1;
+      if (iA >= 0) A[iA][iA] += g;
+      if (iB >= 0) A[iB][iB] += g;
+      if (iA >= 0 && iB >= 0) { A[iA][iB] -= g; A[iB][iA] -= g; }
+    };
+
+    for (const c of analogComps) {
+      if (c.ports.length < 2) continue;
+      const p0 = c.ports[0].id, p1 = c.ports[1].id;
+      if (c.kind === 'resistor' || c.kind === 'potentiometer' || c.kind === 'lamp') {
+        stampResistor(p0, p1, c.resistanceOhms ?? 100);
+      } else if (c.kind === 'led' || c.kind === 'diode') {
+        const { anodeId, cathodeId } = getDiodePorts(c);
+        const vf = Number(c.forwardVoltageV) || (c.kind === 'led' ? 2.0 : 0.7);
+        if (diodeConducting.get(c.id)) {
+          stampResistor(anodeId, cathodeId, DIODE_R_ON);
+          const gOn = 1 / DIODE_R_ON;
+          const iA = netIdx.get(find(anodeId)) - 1;
+          const iK = netIdx.get(find(cathodeId)) - 1;
+          if (iA >= 0) z[iA] += gOn * vf;
+          if (iK >= 0) z[iK] -= gOn * vf;
+        } else {
+          stampResistor(anodeId, cathodeId, DIODE_R_OFF);
+        }
+      } else if (c.kind === 'capacitor') {
+        stampResistor(p0, p1, 1e9);
+      } else if (c.kind === 'current_source') {
+        const iVal = Number(c.currentA) || 0.02;
+        const iPos = netIdx.get(find(p0)) - 1, iNeg = netIdx.get(find(p1)) - 1;
+        if (iPos >= 0) z[iPos] += iVal;
+        if (iNeg >= 0) z[iNeg] -= iVal;
+      }
+    }
+
+    vSources.forEach((src, k) => {
+      const row = nNodes + k;
+      const iPos = netIdx.get(find(src.ports[0].id)) - 1;
+      const iNeg = netIdx.get(find(src.ports[1].id)) - 1;
+      if (iPos >= 0) { A[iPos][row] += 1; A[row][iPos] += 1; }
+      if (iNeg >= 0) { A[iNeg][row] -= 1; A[row][iNeg] -= 1; }
+      z[row] = Number(src.voltageV) || 5;
+    });
+
+    return solveLinearSystem(A, z);
   };
 
-  for (const c of analogComps) {
-    if (c.ports.length < 2) continue;
-    const p0 = c.ports[0].id, p1 = c.ports[1].id;
-    if (c.kind === 'resistor' || c.kind === 'potentiometer' || c.kind === 'lamp') stampResistor(p0, p1, c.resistanceOhms ?? 100);
-    else if (c.kind === 'led' || c.kind === 'diode') stampResistor(p0, p1, 220);
-    else if (c.kind === 'capacitor') stampResistor(p0, p1, 1e9);
-    else if (c.kind === 'current_source') {
-      const iVal = Number(c.currentA) || 0.02;
-      const iPos = netIdx.get(find(p0)) - 1, iNeg = netIdx.get(find(p1)) - 1;
-      if (iPos >= 0) z[iPos] += iVal;
-      if (iNeg >= 0) z[iNeg] -= iVal;
+  let x = null;
+  const maxIterations = diodes.length > 0 ? 8 : 1;
+  for (let iter = 0; iter < maxIterations; iter++) {
+    x = solvePass();
+    if (!x) return result;
+    if (diodes.length === 0) break;
+
+    let changed = false;
+    for (const d of diodes) {
+      const { anodeId, cathodeId } = getDiodePorts(d);
+      const vf = Number(d.forwardVoltageV) || (d.kind === 'led' ? 2.0 : 0.7);
+      const idxA = netIdx.get(find(anodeId));
+      const idxK = netIdx.get(find(cathodeId));
+      const vA = idxA === 0 ? 0 : x[idxA - 1];
+      const vK = idxK === 0 ? 0 : x[idxK - 1];
+      const vAk = vA - vK;
+      const isOn = diodeConducting.get(d.id);
+
+      if (!isOn && vAk > vf - 1e-3) {
+        diodeConducting.set(d.id, true);
+        changed = true;
+      } else if (isOn) {
+        const iD = (vAk - vf) / DIODE_R_ON;
+        if (iD < -1e-7) {
+          diodeConducting.set(d.id, false);
+          changed = true;
+        }
+      }
     }
+    if (!changed) break;
   }
 
-  vSources.forEach((src, k) => {
-    const row = nNodes + k;
-    const iPos = netIdx.get(find(src.ports[0].id)) - 1;
-    const iNeg = netIdx.get(find(src.ports[1].id)) - 1;
-    if (iPos >= 0) { A[iPos][row] += 1; A[row][iPos] += 1; }
-    if (iNeg >= 0) { A[iNeg][row] -= 1; A[row][iNeg] -= 1; }
-    z[row] = Number(src.voltageV) || 5;
-  });
-
-  const x = solveLinearSystem(A, z);
   if (!x) return result;
 
   const nodeV = (portId) => {
@@ -291,25 +365,90 @@ export function simulateExtended(snapshot) {
   if (vSources.length > 0) totalI = Math.abs(x[nNodes]);
   else if (primarySource.kind === 'current_source') totalI = Number(primarySource.currentA) || 0.02;
 
+  // Detect reversed or under-voltage diodes/LEDs
+  const reversedLeds = [];
+  const reversedDiodes = [];
+  const overcurrentLeds = [];
+  const activeCompIds = new Set();
+  const details = [];
+  let firstVoltage = null;
+  let activeLedVf = null;
+
+  for (const d of diodes) {
+    const { anodeId, cathodeId } = getDiodePorts(d);
+    const vf = Number(d.forwardVoltageV) || (d.kind === 'led' ? 2.0 : 0.7);
+    const vAk = nodeV(anodeId) - nodeV(cathodeId);
+    if (diodeConducting.get(d.id)) {
+      const iD = Math.max(0, (vAk - vf) / DIODE_R_ON);
+      if (iD > 1e-7) {
+        activeCompIds.add(d.id);
+        if (d.kind === 'led') {
+          if (activeLedVf === null) activeLedVf = vf;
+          const maxI = Number(d.maxCurrentA) || 0.02;
+          if (iD > maxI * 1.25) {
+            overcurrentLeds.push({ comp: d, currentA: iD, maxI });
+          }
+        }
+        details.push({ id: d.id, name: d.name, voltageV: Math.abs(vAk), currentA: iD, resistanceOhms: DIODE_R_ON });
+      }
+    } else if (vAk < -0.2) {
+      if (d.kind === 'led') reversedLeds.push(d);
+      else reversedDiodes.push(d);
+    }
+  }
+
+  if (overcurrentLeds.length > 0) {
+    const first = overcurrentLeds[0];
+    const iFmt = formatCurrent(first.currentA);
+    result.status = 'unsafe';
+    result.values.sourceVoltageV = Vs;
+    result.values.circuitCurrentA = totalI;
+    result.diagnostics.push({
+      code: 'OVERCURRENT',
+      severity: 'error',
+      affectedIds: overcurrentLeds.map((o) => o.comp.id),
+      messageAr: `خطر تيار زائد على الصمام LED (${iFmt.value} ${iFmt.unit} يتجاوز الحد الآمن ${(first.maxI * 1000).toFixed(0)} mA)! أضف أو زد قيمة المقاومة.`,
+      messageEn: `Overcurrent danger on LED (${iFmt.value} ${iFmt.unit} exceeds safe limit ${(first.maxI * 1000).toFixed(0)} mA)! Add or increase series resistance.`,
+    });
+    return result;
+  }
+
   if (totalI < 1e-7) {
     const hasOpenSwitch = analogComps.some((c) => c.kind === 'switch' && c.isOpen);
     result.status = 'open';
     result.values.sourceVoltageV = Vs;
     result.values.circuitCurrentA = 0;
     result.values.resistorVoltageV = 0;
-    result.diagnostics.push({
-      code: hasOpenSwitch ? 'SWITCH_OPEN' : 'OPEN_CIRCUIT',
-      severity: 'info',
-      affectedIds: [],
-      messageAr: hasOpenSwitch ? 'المفتاح مفتوح؛ انقر عليه مباشرة لإغلاق الدائرة.' : 'الدائرة مفتوحة؛ أكمل التوصيل بين طرفي المصدر.',
-      messageEn: hasOpenSwitch ? 'Switch is open; click it directly to close the circuit.' : 'Open circuit; complete the loop between source terminals.',
-    });
+
+    if (reversedLeds.length > 0) {
+      result.diagnostics.push({
+        code: 'REVERSED_LED',
+        severity: 'warning',
+        affectedIds: reversedLeds.map((d) => d.id),
+        messageAr: 'الصمام الضوئي LED موصول بعكس القطبية! يجب توصيل الأنود (A) نحو الطرف الموجب والكاثود (K) نحو السالب.',
+        messageEn: 'LED is reverse-biased! Connect Anode (A) toward positive and Cathode (K) toward negative.',
+      });
+    } else if (reversedDiodes.length > 0) {
+      result.diagnostics.push({
+        code: 'REVERSED_DIODE',
+        severity: 'warning',
+        affectedIds: reversedDiodes.map((d) => d.id),
+        messageAr: 'الدايود في حالة انحياز عكسي يمنع مرور التيار. اعكس اتجاهه إذا كنت تريد التوصيل الأمامي.',
+        messageEn: 'Diode is reverse-biased and blocking current. Flip its orientation for forward conduction.',
+      });
+    } else {
+      result.diagnostics.push({
+        code: hasOpenSwitch ? 'SWITCH_OPEN' : 'OPEN_CIRCUIT',
+        severity: 'info',
+        affectedIds: [],
+        messageAr: hasOpenSwitch ? 'المفتاح مفتوح؛ انقر عليه مباشرة لإغلاق الدائرة.' : 'الدائرة مفتوحة؛ أكمل التوصيل بين طرفي المصدر.',
+        messageEn: hasOpenSwitch ? 'Switch is open; click it directly to close the circuit.' : 'Open circuit; complete the loop between source terminals.',
+      });
+    }
     return result;
   }
 
-  const activeCompIds = new Set([primarySource.id]);
-  const details = [];
-  let firstVoltage = null;
+  activeCompIds.add(primarySource.id);
 
   for (const c of analogComps) {
     if (c.ports.length < 2) continue;
@@ -322,8 +461,6 @@ export function simulateExtended(snapshot) {
         if (firstVoltage === null) firstVoltage = vDrop;
         details.push({ id: c.id, name: c.name, voltageV: vDrop, currentA: iBranch, resistanceOhms: rVal });
       }
-    } else if (c.kind === 'led' || c.kind === 'diode') {
-      if (vDrop / 220 > 1e-7) activeCompIds.add(c.id);
     } else if ((c.kind === 'switch' && !c.isOpen) || c.kind === 'inductor') {
       const n0 = find(c.ports[0].id);
       if (n0 === netPos || n0 === netNeg || Math.abs(nodeV(c.ports[0].id)) > 1e-6) activeCompIds.add(c.id);
@@ -342,10 +479,20 @@ export function simulateExtended(snapshot) {
     sourceVoltageV: Vs,
     circuitCurrentA: totalI,
     resistorVoltageV: firstVoltage ?? Vs,
-    ledForwardVoltageV: analogComps.some((c) => c.kind === 'led' && activeCompIds.has(c.id)) ? 2.0 : null,
+    ledForwardVoltageV: activeLedVf,
     equivalentResistanceOhms: req,
     nodeDetails: details,
   };
+
+  if (reversedLeds.length > 0) {
+    result.diagnostics.push({
+      code: 'REVERSED_LED',
+      severity: 'warning',
+      affectedIds: reversedLeds.map((d) => d.id),
+      messageAr: 'ملاحظة: يوجد صمام LED موصول بعكس القطبية في أحد الفروع ولن يضيء حتى يتم تدويره أو عكس توصيله.',
+      messageEn: 'Note: One branch has a reverse-biased LED that will stay OFF until flipped.',
+    });
+  }
 
   const iFmt = formatCurrent(totalI);
   result.diagnostics.push({
