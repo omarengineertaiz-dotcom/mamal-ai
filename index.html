@@ -400,6 +400,121 @@
     body.theme-light .port-circle { fill: #FFFFFF !important; stroke: #D95B00 !important; }
     body.theme-light .wire-flow-overlay { stroke: #0F172A !important; }
     body.theme-light .wire-path.wire-selected { filter: drop-shadow(0 0 5px #0F172A); }
+
+    /* ================================================================
+       MOBILE & SMALL-SCREEN RESPONSIVE POLISH (v3.1.1)
+       ================================================================ */
+    .ms-picker-card { max-height: 88dvh; overflow-y: auto; }
+    .ms-mobile-group-select { display: none; }
+    .drawer-mobile-close { display: none; }
+
+    @media (max-width: 768px) {
+      header.app-header {
+        height: 52px;
+        padding: 0 8px;
+        flex-wrap: nowrap;
+        gap: 6px;
+      }
+      .app-shell { height: calc(100dvh - 52px); }
+      .app-sidebar { top: 52px; }
+      .brand-section { gap: 6px; min-width: 0; }
+      .brand-text-title { font-size: 14px; white-space: nowrap; gap: 5px; }
+      .brand-symbol { width: 28px; height: 28px; font-size: 14px; }
+      .btn-mobile-menu { width: 34px; height: 34px; font-size: 16px; }
+      .header-actions { flex-wrap: nowrap; gap: 4px; }
+      .header-mini-btn { padding: 4px 7px; font-size: 11px; min-height: 30px; white-space: nowrap; }
+      #btnHeaderLaunchLab { padding: 4px 9px !important; font-size: 11px !important; min-height: 30px !important; white-space: nowrap; }
+      #btnOpenFeedback { display: none; }
+
+      /* Single-row horizontally scrollable Lab bars to maximize canvas height */
+      .mission-control-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 5px 8px;
+        gap: 6px;
+      }
+      .mission-control-bar::-webkit-scrollbar,
+      .multisim-icon-bar::-webkit-scrollbar { display: none; }
+      .mission-title-group { white-space: nowrap; flex-shrink: 0; font-size: 11.5px; }
+      .mission-actions { flex-wrap: nowrap; flex-shrink: 0; gap: 4px; }
+      .lab-cmd-btn { white-space: nowrap; flex-shrink: 0; padding: 3px 7px; font-size: 11px; min-height: 28px; }
+
+      .multisim-icon-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 5px 8px;
+        gap: 5px;
+      }
+      .ms-group-btn { white-space: nowrap; flex-shrink: 0; padding: 4px 9px; font-size: 11px; }
+
+      /* Bottom floating pill bar for Meters & AI Tutor on mobile (never blocks center canvas) */
+      .edge-tabs-stack,
+      html[dir="ltr"] .edge-tabs-stack,
+      .edge-tabs-stack.shifted,
+      html[dir="ltr"] .edge-tabs-stack.shifted {
+        top: auto !important;
+        bottom: 12px !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        flex-direction: row !important;
+        gap: 8px;
+        z-index: 34;
+      }
+      .drawer-edge-btn,
+      html[dir="ltr"] .drawer-edge-btn {
+        border: 1px solid var(--accent-orange) !important;
+        border-radius: 999px !important;
+        padding: 7px 14px !important;
+        font-size: 12px !important;
+      }
+
+      /* Bottom-sheet drawers on mobile */
+      .lab-side-drawer,
+      html[dir="ltr"] .lab-side-drawer {
+        top: auto !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 62dvh !important;
+        border-inline: none !important;
+        border-top: 2px solid var(--accent-orange) !important;
+        border-radius: 16px 16px 0 0 !important;
+        transform: translateY(105%) !important;
+        z-index: 45 !important;
+      }
+      .lab-side-drawer.open {
+        transform: translateY(0) !important;
+      }
+      .drawer-mobile-close {
+        display: inline-flex !important;
+      }
+
+      /* Compact scrollable Select-a-Component modal on mobile */
+      .modal-overlay { padding: 8px; align-items: flex-end; }
+      .ms-picker-card {
+        max-height: 85dvh;
+        padding: 12px;
+        gap: 8px;
+        border-radius: 16px 16px 0 0;
+      }
+      .ms-picker-grid {
+        grid-template-columns: 1fr !important;
+        min-height: auto;
+        gap: 8px;
+      }
+      #pickerGroupsList { display: none !important; }
+      .ms-mobile-group-select { display: block !important; }
+      #pickerComponentsList { max-height: 145px; }
+      .ms-preview-box { padding: 8px; gap: 6px; }
+      #pickerSymbolSvg { width: 105px; height: 68px; }
+    }
   </style>
 </head>
 <body class="technical-grid-bg">
@@ -412,7 +527,7 @@
         <div class="brand-symbol">⚡</div>
         <div class="brand-text-title">
           <span data-i18n="brandName">معمل AI</span>
-          <span class="brand-badge">v3.1</span>
+          <span class="brand-badge">v3.1.1</span>
         </div>
       </a>
     </div>
@@ -616,7 +731,10 @@
 
             <!-- Drawer 1: Measurements -->
             <aside class="lab-side-drawer" id="metersDrawer" aria-label="لوحة القياسات الفيزيائية">
-              <h2 style="font-size: 14px; font-weight: 800; padding-bottom:6px; border-bottom:1px solid var(--color-border-default);" data-i18n="metersDrawerTitle">القياسات الفيزيائية</h2>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:6px; border-bottom:1px solid var(--color-border-default);">
+                <h2 style="font-size: 14px; font-weight: 800;" data-i18n="metersDrawerTitle">القياسات الفيزيائية</h2>
+                <button type="button" class="header-mini-btn drawer-mobile-close" id="btnCloseMetersMobile">✕</button>
+              </div>
 
               <div class="meter-card">
                 <div class="meter-label" data-i18n="meterCurrent">تيار الدائرة (I)</div>
@@ -654,7 +772,10 @@
             <aside class="lab-side-drawer" id="tutorDrawer" aria-label="المرشد الذكي التفاعلي">
               <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:6px; border-bottom:1px solid var(--color-border-default);">
                 <h2 style="font-size: 14px; font-weight: 800;" data-i18n="tutorDrawerTitle">المرشد الذكي (معمل AI)</h2>
-                <span id="tutorModeBadge" style="font-size: 10px; padding: 2px 7px; border-radius: 999px; background: rgba(255,129,44,0.16); color: var(--accent-orange); border: 1px solid rgba(255,129,44,0.35);" data-i18n="tutorReady">جاهز للمساعدة</span>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span id="tutorModeBadge" style="font-size: 10px; padding: 2px 7px; border-radius: 999px; background: rgba(255,129,44,0.16); color: var(--accent-orange); border: 1px solid rgba(255,129,44,0.35);" data-i18n="tutorReady">جاهز للمساعدة</span>
+                  <button type="button" class="header-mini-btn drawer-mobile-close" id="btnCloseTutorMobile">✕</button>
+                </div>
               </div>
 
               <div class="tutor-chat-feed" id="tutorChatFeed">
@@ -737,8 +858,9 @@
         <button type="button" id="btnClosePickerModal" class="header-mini-btn">✕</button>
       </div>
       <div class="ms-picker-grid">
-        <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; flex-direction:column; gap:6px;">
           <label style="font-size:12px; font-weight:700;" data-i18n="selectCompGroup">المجموعة (Group):</label>
+          <select id="pickerMobileGroupSelect" class="styled-input ms-mobile-group-select" aria-label="اختر المجموعة"></select>
           <div class="ms-list-box" id="pickerGroupsList"></div>
         </div>
         <div style="display:flex; flex-direction:column; gap:8px;">
@@ -1043,13 +1165,23 @@
       if (!gList || !cList) return;
 
       gList.innerHTML = '';
+      const mobSel = document.getElementById('pickerMobileGroupSelect');
+      if (mobSel) mobSel.innerHTML = '';
       COMPONENT_GROUPS.forEach((grp) => {
+        const label = `${grp.icon}  ${currentLang === 'ar' ? grp.labelAr : grp.labelEn}`;
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `ms-list-item ${grp.id === pickerGroup ? 'active' : ''}`;
-        btn.textContent = `${grp.icon}  ${currentLang === 'ar' ? grp.labelAr : grp.labelEn}`;
+        btn.textContent = label;
         btn.addEventListener('click', () => { pickerGroup = grp.id; renderPickerModal(); });
         gList.appendChild(btn);
+        if (mobSel) {
+          const opt = document.createElement('option');
+          opt.value = grp.id;
+          opt.textContent = label;
+          if (grp.id === pickerGroup) opt.selected = true;
+          mobSel.appendChild(opt);
+        }
       });
 
       const matches = COMPONENT_CATALOG.filter((item) => {
@@ -2145,7 +2277,58 @@
       }
     });
 
-    // Initialize application with a completely empty lab; the example is opt-in.
+        // Mobile group select & bottom-sheet close buttons
+    document.getElementById('pickerMobileGroupSelect')?.addEventListener('change', (e) => {
+      pickerGroup = e.target.value;
+      renderPickerModal();
+    });
+    document.getElementById('btnCloseMetersMobile')?.addEventListener('click', () => setActiveDrawer(null));
+    document.getElementById('btnCloseTutorMobile')?.addEventListener('click', () => setActiveDrawer(null));
+
+    // Native 2-finger Pinch-to-Zoom & Touch Pan on Mobile Canvas
+    const activeTouchPointers = new Map();
+    let pinchStartDist = null;
+    let pinchStartZoom = 1;
+    let pinchStartMid = null;
+    let pinchStartVB = null;
+
+    svgEl?.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'touch') return;
+      activeTouchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activeTouchPointers.size === 2) {
+        marqueeContext = null;
+        const pts = [...activeTouchPointers.values()];
+        pinchStartDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+        pinchStartZoom = viewBoxState.zoom;
+        pinchStartMid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+        pinchStartVB = { x: viewBoxState.x, y: viewBoxState.y };
+      }
+    });
+    svgEl?.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'touch' || !activeTouchPointers.has(e.pointerId)) return;
+      activeTouchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activeTouchPointers.size === 2 && pinchStartDist > 10) {
+        const pts = [...activeTouchPointers.values()];
+        const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+        const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+        const scale = dist / pinchStartDist;
+        const newZoom = Math.max(0.45, Math.min(2.5, pinchStartZoom * scale));
+        const dx = (mid.x - pinchStartMid.x) / newZoom;
+        const dy = (mid.y - pinchStartMid.y) / newZoom;
+        viewBoxState.zoom = newZoom;
+        viewBoxState.x = pinchStartVB.x - dx;
+        viewBoxState.y = pinchStartVB.y - dy;
+        applyViewBox();
+      }
+    });
+    const endTouchPtr = (e) => {
+      activeTouchPointers.delete(e.pointerId);
+      if (activeTouchPointers.size < 2) pinchStartDist = null;
+    };
+    svgEl?.addEventListener('pointerup', endTouchPtr);
+    svgEl?.addEventListener('pointercancel', endTouchPtr);
+
+// Initialize application with a completely empty lab; the example is opt-in.
     renderMultisimIconBar();
     updateDrawerArrows();
     const initialRoute = resolveRoute(window.location.hash);
