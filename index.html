@@ -473,25 +473,29 @@
         font-size: 12px !important;
       }
 
-      /* Bottom-sheet drawers on mobile */
+      /* Bottom-sheet drawers on mobile — FIXED to viewport so close button is ALWAYS visible */
       .lab-side-drawer,
       html[dir="ltr"] .lab-side-drawer {
+        position: fixed !important;
         top: auto !important;
         left: 0 !important;
         right: 0 !important;
         bottom: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
-        height: 62dvh !important;
+        height: 58dvh !important;
+        max-height: calc(100dvh - 110px) !important;
         border-inline: none !important;
         border-top: 2px solid var(--accent-orange) !important;
         border-radius: 16px 16px 0 0 !important;
-        transform: translateY(105%) !important;
-        z-index: 45 !important;
+        transform: translateY(110%) !important;
+        z-index: 160 !important;
+        padding-top: 10px !important;
       }
       .lab-side-drawer.open {
         transform: translateY(0) !important;
       }
+      .tutor-chat-feed { min-height: 120px !important; }
       .drawer-mobile-close {
         display: inline-flex !important;
       }
@@ -515,6 +519,49 @@
       .ms-preview-box { padding: 8px; gap: 6px; }
       #pickerSymbolSvg { width: 105px; height: 68px; }
     }
+
+    /* Collapsible Top Lab Toolbars Toggle Tab (Works on Mobile & Desktop) */
+    .lab-toolbars-wrap {
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s ease;
+    }
+    .lab-toolbars-wrap.collapsed {
+      display: none !important;
+    }
+    .toolbar-collapse-strip {
+      position: relative;
+      height: 0;
+      z-index: 30;
+      display: flex;
+      justify-content: center;
+    }
+    .btn-collapse-toolbars {
+      background: #23272F;
+      color: var(--accent-orange);
+      border: 1px solid var(--accent-orange);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      padding: 2px 18px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      height: 20px;
+      line-height: 16px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+    }
+    body.theme-light .btn-collapse-toolbars {
+      background: #FFFFFF;
+      color: #D95B00;
+    }
+    .mobile-sheet-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 150;
+    }
+    .mobile-sheet-backdrop.active { display: block; }
   </style>
 </head>
 <body class="technical-grid-bg">
@@ -527,7 +574,7 @@
         <div class="brand-symbol">⚡</div>
         <div class="brand-text-title">
           <span data-i18n="brandName">معمل AI</span>
-          <span class="brand-badge">v3.1.1</span>
+          <span class="brand-badge">v3.1.2</span>
         </div>
       </a>
     </div>
@@ -651,6 +698,7 @@
 
         <!-- VIEW 3: LAB (#/lab) -->
         <section id="view-lab" class="view-panel" aria-label="المختبر التفاعلي" hidden>
+          <div class="lab-toolbars-wrap" id="labToolbarsWrap">
           <!-- Mission Control Bar -->
           <div class="mission-control-bar">
             <div class="mission-title-group">
@@ -688,6 +736,8 @@
 
           <!-- Multisim Schematic Category Icon Bar -->
           <div class="multisim-icon-bar" id="multisimIconBar" aria-label="مجموعات قطع Multisim"></div>
+          </div>
+          <div class="toolbar-collapse-strip"><button type="button" class="btn-collapse-toolbars" id="btnToggleLabToolbars" title="إخفاء أو إظهار شريط الأدوات">▲</button></div>
 
           <!-- Full-Width Clean Workspace -->
           <div class="lab-workspace" id="labWorkspace">
@@ -940,6 +990,25 @@
     </div>
   </div>
 
+
+  <!-- Mobile Bottom Sheet Backdrop -->
+  <div class="mobile-sheet-backdrop" id="mobileSheetBackdrop"></div>
+
+  <!-- Unsaved Changes Leave-Lab Confirmation Modal -->
+  <div class="modal-overlay" id="leaveLabModal" role="dialog" aria-modal="true" aria-label="حفظ المشروع قبل الخروج">
+    <div class="smoky-glass-panel modal-card">
+      <h3 style="font-size:16px; color:var(--accent-orange); margin-bottom:10px;" id="leaveModalTitle">💾 هل تريد حفظ تجربتك قبل الخروج؟</h3>
+      <p style="font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:16px;" id="leaveModalDesc">
+        لديك دائرة مفتوحة حالياً في ساحة العمل. يمكنك حفظها بامتداد .mamal للعودة إليها لاحقاً، أو الخروج دون حفظ.
+      </p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button type="button" id="btnLeaveSave" class="glass-card-interactive glass-btn-primary" style="padding:9px; font-size:13px;">💾 حفظ والخروج</button>
+        <button type="button" id="btnLeaveDiscard" class="lab-cmd-btn danger" style="justify-content:center; padding:8px; font-size:13px;">خروج دون حفظ</button>
+        <button type="button" id="btnLeaveCancel" class="lab-cmd-btn" style="justify-content:center; padding:8px; font-size:13px;">إلغاء (البقاء في المختبر)</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { simulate } from './src/domain/circuit/solver.js';
     import { simulateExtended, formatCurrent, formatResistance } from './src/domain/circuit/extended-solver.js';
@@ -1085,8 +1154,69 @@
       clearCircuit(labState); goToRoute('lab');
     });
     document.querySelectorAll('.btn-go-free-lab').forEach((b) => b.addEventListener('click', () => { clearCircuit(labState); goToRoute('lab'); }));
+    let pendingLeaveRoute = null;
+    let circuitDirty = false;
+
+    function requestLeaveTo(targetRoute) {
+      if (activeRoute === 'lab' && targetRoute !== 'lab' && labState.components.length > 0 && circuitDirty) {
+        pendingLeaveRoute = targetRoute;
+        const mTitle = document.getElementById('leaveModalTitle');
+        const mDesc = document.getElementById('leaveModalDesc');
+        const bSave = document.getElementById('btnLeaveSave');
+        const bDisc = document.getElementById('btnLeaveDiscard');
+        const bCanc = document.getElementById('btnLeaveCancel');
+        if (currentLang === 'en') {
+          if (mTitle) mTitle.textContent = '💾 Save your circuit before leaving?';
+          if (mDesc) mDesc.textContent = 'You have an open circuit on the canvas. Save it as .mamal to reopen later, or leave without saving.';
+          if (bSave) bSave.textContent = '💾 Save & Leave';
+          if (bDisc) bDisc.textContent = 'Leave Without Saving';
+          if (bCanc) bCanc.textContent = 'Cancel (Stay in Lab)';
+        } else {
+          if (mTitle) mTitle.textContent = '💾 هل تريد حفظ تجربتك قبل الخروج؟';
+          if (mDesc) mDesc.textContent = 'لديك دائرة مفتوحة حالياً في ساحة العمل. يمكنك حفظها بامتداد .mamal للعودة إليها لاحقاً، أو الخروج دون حفظ.';
+          if (bSave) bSave.textContent = '💾 حفظ والخروج';
+          if (bDisc) bDisc.textContent = 'خروج دون حفظ';
+          if (bCanc) bCanc.textContent = 'إلغاء (البقاء في المختبر)';
+        }
+        document.getElementById('leaveLabModal')?.classList.add('open');
+        return;
+      }
+      goToRoute(targetRoute);
+    }
+
+    document.querySelector('.brand-logo')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      requestLeaveTo('home');
+    });
+    document.getElementById('btnLeaveSave')?.addEventListener('click', () => {
+      localStorage.setItem('mamal_ai_saved_circuit', buildSavePayload());
+      downloadCircuitFile(currentCircuitName); circuitDirty = false;
+      circuitDirty = false;
+      document.getElementById('leaveLabModal')?.classList.remove('open');
+      if (pendingLeaveRoute) { const r = pendingLeaveRoute; pendingLeaveRoute = null; goToRoute(r); }
+    });
+    document.getElementById('btnLeaveDiscard')?.addEventListener('click', () => {
+      circuitDirty = false;
+      document.getElementById('leaveLabModal')?.classList.remove('open');
+      if (pendingLeaveRoute) { const r = pendingLeaveRoute; pendingLeaveRoute = null; goToRoute(r); }
+    });
+    document.getElementById('btnLeaveCancel')?.addEventListener('click', () => {
+      pendingLeaveRoute = null;
+      document.getElementById('leaveLabModal')?.classList.remove('open');
+    });
+
+    // Backdrop closes mobile bottom sheet + Collapsible top toolbars toggle
+    document.getElementById('mobileSheetBackdrop')?.addEventListener('click', () => setActiveDrawer(null));
+    document.getElementById('btnToggleLabToolbars')?.addEventListener('click', () => {
+      const wrap = document.getElementById('labToolbarsWrap');
+      const btn = document.getElementById('btnToggleLabToolbars');
+      if (!wrap || !btn) return;
+      const isCollapsed = wrap.classList.toggle('collapsed');
+      btn.textContent = isCollapsed ? '▼' : '▲';
+    });
+
     document.querySelectorAll('.nav-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => { e.preventDefault(); const r = btn.getAttribute('data-route'); if (r) goToRoute(r); });
+      btn.addEventListener('click', (e) => { e.preventDefault(); const r = btn.getAttribute('data-route'); if (r) requestLeaveTo(r); });
     });
 
     // Experiments Tabs
@@ -1119,6 +1249,8 @@
       document.getElementById('btnToggleMetersDrawer')?.classList.toggle('active-tab', activeDrawer === 'meters');
       document.getElementById('btnToggleTutorDrawer')?.classList.toggle('active-tab', activeDrawer === 'tutor');
       document.getElementById('edgeTabsStack')?.classList.toggle('shifted', activeDrawer !== null);
+      const isMobile = window.innerWidth <= 768;
+      document.getElementById('mobileSheetBackdrop')?.classList.toggle('active', isMobile && activeDrawer !== null);
       updateDrawerArrows();
     }
 
@@ -1255,7 +1387,7 @@
       const pos = { x: 100 + (idx % 4) * 210, y: 100 + (Math.floor(idx / 4) % 3) * 150 };
       const newComp = { id: compId, kind: item.kind, name: item.code, position: pos, rotation: 0, ...JSON.parse(JSON.stringify(item.defaults)), ports };
       newComp.name = formatComponentName(newComp);
-      addComponent(labState, newComp);
+      addComponent(labState, newComp); circuitDirty = true;
       selectedCompIds.clear();
       selectedCompIds.add(compId);
       render();
