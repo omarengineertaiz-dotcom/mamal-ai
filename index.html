@@ -158,7 +158,7 @@
     /* ================================================================
        PAGE 3: LAB VIEW (MULTISIM-INSPIRED FULL-WIDTH WORKSPACE)
        ================================================================ */
-    #view-lab.active { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    #view-lab.active { position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
 
     .mission-control-bar {
       padding: 5px 12px; display: flex; align-items: center; justify-content: space-between;
@@ -451,20 +451,26 @@
       }
       .ms-group-btn { white-space: nowrap; flex-shrink: 0; padding: 4px 9px; font-size: 11px; }
 
-      /* Bottom floating pill bar for Meters & AI Tutor on mobile (never blocks center canvas) */
+      /* Dedicated bottom dock bar OUTSIDE canvas on mobile */
+      #view-lab.active { height: calc(100dvh - 52px); display: flex; flex-direction: column; }
+      .lab-workspace { flex: 1; min-height: 0; }
       .edge-tabs-stack,
       html[dir="ltr"] .edge-tabs-stack,
       .edge-tabs-stack.shifted,
       html[dir="ltr"] .edge-tabs-stack.shifted {
-        top: auto !important;
-        bottom: 12px !important;
-        left: 50% !important;
-        right: auto !important;
-        transform: translateX(-50%) !important;
+        position: static !important;
+        transform: none !important;
         flex-direction: row !important;
-        gap: 8px;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: rgba(21, 23, 27, 0.96);
+        border-top: 1px solid var(--color-border-default);
+        flex-shrink: 0;
         z-index: 34;
       }
+      body.theme-light .edge-tabs-stack { background: #FFFFFF !important; }
       .drawer-edge-btn,
       html[dir="ltr"] .drawer-edge-btn {
         border: 1px solid var(--accent-orange) !important;
@@ -574,7 +580,7 @@
         <div class="brand-symbol">⚡</div>
         <div class="brand-text-title">
           <span data-i18n="brandName">معمل AI</span>
-          <span class="brand-badge">v3.1.2</span>
+          <span class="brand-badge">v3.1.3</span>
         </div>
       </a>
     </div>
@@ -760,24 +766,18 @@
               </svg>
 
               <!-- Floating Mini-Bar above Selected Component -->
-              <div class="comp-floating-bar" id="compFloatingBar">
+              <div class="comp-floating-bar" id="compFloatingBar" style="align-items:center;">
+                <div id="floatLiveSliderWrap" style="display:none; align-items:center; gap:5px; padding-inline:4px;">
+                  <input type="range" id="floatLiveSlider" min="1" max="100" step="1" style="width:92px; accent-color:var(--accent-orange);" />
+                  <span id="floatLiveVal" style="font-size:11px; font-family:var(--font-family-mono); color:var(--accent-orange); min-width:44px; direction:ltr;"></span>
+                </div>
                 <button type="button" class="lab-cmd-btn" id="floatBtnEdit" title="تعديل القيمة">⚙️</button>
                 <button type="button" class="lab-cmd-btn" id="floatBtnRotate" title="تدوير 90°">↻</button>
                 <button type="button" class="lab-cmd-btn danger" id="floatBtnDelete" title="حذف">🗑️</button>
               </div>
             </section>
 
-            <!-- Separate Floating Edge Tabs: Meters & AI Tutor -->
-            <div class="edge-tabs-stack" id="edgeTabsStack">
-              <button type="button" class="drawer-edge-btn" id="btnToggleMetersDrawer" tabindex="0">
-                <span data-i18n="metersTabLabel">📊 القياسات</span>
-                <span id="metersTabArrow">▶</span>
-              </button>
-              <button type="button" class="drawer-edge-btn" id="btnToggleTutorDrawer" tabindex="0">
-                <span data-i18n="tutorTabLabel">🤖 المرشد الذكي</span>
-                <span id="tutorTabArrow">▶</span>
-              </button>
-            </div>
+
 
             <!-- Drawer 1: Measurements -->
             <aside class="lab-side-drawer" id="metersDrawer" aria-label="لوحة القياسات الفيزيائية">
@@ -840,6 +840,17 @@
               </form>
             </aside>
           </div>
+            <!-- Separate Floating Edge Tabs: Meters & AI Tutor -->
+            <div class="edge-tabs-stack" id="edgeTabsStack">
+              <button type="button" class="drawer-edge-btn" id="btnToggleMetersDrawer" tabindex="0">
+                <span data-i18n="metersTabLabel">📊 القياسات</span>
+                <span id="metersTabArrow">▶</span>
+              </button>
+              <button type="button" class="drawer-edge-btn" id="btnToggleTutorDrawer" tabindex="0">
+                <span data-i18n="tutorTabLabel">🤖 المرشد الذكي</span>
+                <span id="tutorTabArrow">▶</span>
+              </button>
+            </div>
         </section>
 
         <!-- VIEW 4: GUIDE -->
@@ -946,7 +957,7 @@
           <input type="range" id="propValueSlider" min="0" max="100" step="1" style="width:100%; accent-color:var(--accent-orange); margin-bottom:8px;" />
           <div style="display:flex; gap:8px; align-items:center;">
             <input type="number" id="propValueNumber" step="any" min="0" class="styled-input" style="flex:1; direction:ltr;" />
-            <span id="propValueUnit" style="font-family:var(--font-family-mono); font-weight:700; min-width:36px;">V</span>
+            <select id="propUnitSelect" class="styled-input" style="width:82px; font-family:var(--font-family-mono); font-weight:700; direction:ltr;"></select>
           </div>
         </div>
         <div id="propLedColorWrap" style="display:none;">
@@ -1366,6 +1377,9 @@
       if (comp.kind === 'led') return `LED ${comp.forwardVoltageV}V`;
       if (comp.kind === 'diode') return `D 1N4007`;
       if (comp.kind === 'switch') return comp.isOpen ? (ar ? 'مفتوح' : 'OPEN') : (ar ? 'مغلق' : 'CLOSED');
+      if (comp.kind === 'logic_input') return ar ? `مدخل (${comp.logicValue ? 1 : 0})` : `IN (${comp.logicValue ? 1 : 0})`;
+      if (comp.kind === 'logic_probe') return ar ? 'مؤشر منطقي' : 'PROBE';
+      if (comp.kind?.startsWith('gate_')) return comp.kind.replace('gate_', '').toUpperCase();
       return comp.name;
     }
 
@@ -1432,39 +1446,67 @@
     const propModal = document.getElementById('propModal');
     const propSlider = document.getElementById('propValueSlider');
     const propNumber = document.getElementById('propValueNumber');
-    const propUnit = document.getElementById('propValueUnit');
+    const propUnitSelect = document.getElementById('propUnitSelect');
     const propLabel = document.getElementById('propValueLabel');
     const propLedWrap = document.getElementById('propLedColorWrap');
 
+    const UNIT_CONFIGS = {
+      voltageV: [{ u: 'V', mul: 1 }, { u: 'mV', mul: 1e-3 }],
+      currentA: [{ u: 'mA', mul: 1e-3 }, { u: 'A', mul: 1 }, { u: 'µA', mul: 1e-6 }],
+      resistanceOhms: [{ u: 'Ω', mul: 1 }, { u: 'kΩ', mul: 1e3 }, { u: 'MΩ', mul: 1e6 }],
+      capacitanceUf: [{ u: 'µF', mul: 1 }, { u: 'nF', mul: 1e-3 }, { u: 'pF', mul: 1e-6 }, { u: 'mF', mul: 1e3 }],
+      inductanceMh: [{ u: 'mH', mul: 1 }, { u: 'µH', mul: 1e-3 }, { u: 'H', mul: 1e3 }],
+      forwardVoltageV: [{ u: 'V', mul: 1 }],
+    };
+
     function openComponentProperties(comp) {
       hideContextMenu();
-      let field = null, min = 0, max = 100, step = 1, unit = '', labelAr = '', labelEn = '', val = 0;
+      let field = null, min = 0, max = 100, step = 1, labelAr = '', labelEn = '', val = 0;
       if (propLedWrap) propLedWrap.style.display = 'none';
 
       if (comp.kind === 'dc_source' || comp.kind === 'ac_source') {
-        field = 'voltageV'; min = 0; max = 48; step = 0.5; unit = 'V'; labelAr = 'فرق الجهد (فولت):'; labelEn = 'Voltage (V):'; val = comp.voltageV ?? 5;
+        field = 'voltageV'; min = 0; max = 48; step = 0.5; labelAr = 'فرق الجهد:'; labelEn = 'Voltage:'; val = comp.voltageV ?? 5;
       } else if (comp.kind === 'current_source') {
-        field = 'currentA'; min = 0.001; max = 2; step = 0.005; unit = 'A'; labelAr = 'شدة التيار (أمبير):'; labelEn = 'Current (A):'; val = comp.currentA ?? 0.02;
+        field = 'currentA'; min = 1; max = 500; step = 1; labelAr = 'شدة التيار:'; labelEn = 'Current:'; val = comp.currentA ?? 0.02;
       } else if (comp.kind === 'resistor' || comp.kind === 'potentiometer' || comp.kind === 'lamp') {
-        field = 'resistanceOhms'; min = 1; max = 5000; step = 10; unit = 'Ω'; labelAr = 'المقاومة (أوم):'; labelEn = 'Resistance (Ω):'; val = comp.resistanceOhms ?? 330;
+        field = 'resistanceOhms'; min = 1; max = 1000; step = 10; labelAr = 'المقاومة:'; labelEn = 'Resistance:'; val = comp.resistanceOhms ?? 330;
       } else if (comp.kind === 'capacitor') {
-        field = 'capacitanceUf'; min = 1; max = 1000; step = 1; unit = 'µF'; labelAr = 'السعة (µF):'; labelEn = 'Capacitance (µF):'; val = comp.capacitanceUf ?? 100;
+        field = 'capacitanceUf'; min = 1; max = 1000; step = 1; labelAr = 'السعة:'; labelEn = 'Capacitance:'; val = comp.capacitanceUf ?? 100;
       } else if (comp.kind === 'inductor') {
-        field = 'inductanceMh'; min = 1; max = 500; step = 1; unit = 'mH'; labelAr = 'الحث (mH):'; labelEn = 'Inductance (mH):'; val = comp.inductanceMh ?? 10;
+        field = 'inductanceMh'; min = 1; max = 500; step = 1; labelAr = 'الحث:'; labelEn = 'Inductance:'; val = comp.inductanceMh ?? 10;
       } else if (comp.kind === 'led') {
-        field = 'forwardVoltageV'; min = 1.2; max = 4.0; step = 0.1; unit = 'V'; labelAr = 'الجهد الأمامي (Vf):'; labelEn = 'Forward Voltage (Vf):'; val = comp.forwardVoltageV ?? 2.0;
+        field = 'forwardVoltageV'; min = 1.2; max = 4.0; step = 0.1; labelAr = 'الجهد الأمامي (Vf):'; labelEn = 'Forward Voltage (Vf):'; val = comp.forwardVoltageV ?? 2.0;
         editingLedColor = comp.ledColor || '#FF4D4F';
         if (propLedWrap) propLedWrap.style.display = '';
       } else if (comp.kind === 'switch') {
         toggleSwitch(labState, comp.id); render(); return;
+      } else if (comp.kind === 'logic_input') {
+        comp.logicValue = comp.logicValue ? 0 : 1; labState.revision++; render(); return;
       } else return;
 
       editingCompId = comp.id;
       propModal.dataset.field = field;
       if (propLabel) propLabel.textContent = currentLang === 'ar' ? labelAr : labelEn;
-      if (propUnit) propUnit.textContent = unit;
-      if (propSlider) { propSlider.min = String(min); propSlider.max = String(Math.max(max, val)); propSlider.step = String(step); propSlider.value = String(val); }
-      if (propNumber) propNumber.value = String(val);
+
+      const units = UNIT_CONFIGS[field] || [{ u: '', mul: 1 }];
+      let bestUnit = units[0];
+      if (field === 'resistanceOhms' && val >= 1e6) bestUnit = units[2];
+      else if (field === 'resistanceOhms' && val >= 1e3) bestUnit = units[1];
+      else if (field === 'currentA' && val >= 1) bestUnit = units[1];
+
+      if (propUnitSelect) {
+        propUnitSelect.innerHTML = '';
+        units.forEach((opt) => {
+          const o = document.createElement('option');
+          o.value = String(opt.mul);
+          o.textContent = opt.u;
+          if (opt === bestUnit) o.selected = true;
+          propUnitSelect.appendChild(o);
+        });
+      }
+      const displayVal = Number((val / bestUnit.mul).toFixed(4));
+      if (propSlider) { propSlider.min = String(min); propSlider.max = String(Math.max(max, displayVal)); propSlider.step = String(step); propSlider.value = String(displayVal); }
+      if (propNumber) propNumber.value = String(displayVal);
       propModal?.classList.add('open');
     }
 
@@ -1492,7 +1534,9 @@
       e.preventDefault();
       const comp = labState.components.find((c) => c.id === editingCompId);
       const field = propModal?.dataset.field;
-      const val = Number(propNumber?.value);
+      const rawVal = Number(propNumber?.value);
+      const mul = Number(propUnitSelect?.value) || 1;
+      const val = rawVal * mul;
       if (comp && field && Number.isFinite(val) && val >= 0) {
         comp[field] = val;
         if (comp.kind === 'led') comp.ledColor = editingLedColor;
@@ -1567,10 +1611,44 @@
       const pt = svg.createSVGPoint();
       pt.x = comp.position.x + 60; pt.y = comp.position.y - 8;
       const screenPt = pt.matrixTransform(ctm);
-      bar.style.left = `${Math.max(8, screenPt.x - wrapRect.left - 58)}px`;
-      bar.style.top = `${Math.max(8, screenPt.y - wrapRect.top - 36)}px`;
+      const slWrap = document.getElementById('floatLiveSliderWrap');
+      const sl = document.getElementById('floatLiveSlider');
+      const slVal = document.getElementById('floatLiveVal');
+      if (slWrap && sl && slVal) {
+        if (comp.isVariable) {
+          slWrap.style.display = 'inline-flex';
+          if (comp.kind === 'dc_source' || comp.kind === 'ac_source') {
+            sl.min = '0'; sl.max = '48'; sl.step = '0.5'; sl.value = String(comp.voltageV ?? 5); slVal.textContent = `${sl.value}V`;
+          } else if (comp.kind === 'potentiometer') {
+            sl.min = '10'; sl.max = '5000'; sl.step = '10'; sl.value = String(comp.resistanceOhms ?? 500); slVal.textContent = formatResistance(Number(sl.value));
+          } else if (comp.kind === 'capacitor') {
+            sl.min = '1'; sl.max = '500'; sl.step = '1'; sl.value = String(comp.capacitanceUf ?? 50); slVal.textContent = `${sl.value}µF`;
+          } else if (comp.kind === 'inductor') {
+            sl.min = '1'; sl.max = '200'; sl.step = '1'; sl.value = String(comp.inductanceMh ?? 25); slVal.textContent = `${sl.value}mH`;
+          } else {
+            slWrap.style.display = 'none';
+          }
+        } else {
+          slWrap.style.display = 'none';
+        }
+      }
+      bar.style.left = `${Math.max(8, Math.min(wrapRect.width - 230, screenPt.x - wrapRect.left - 80))}px`;
+      bar.style.top = `${Math.max(8, screenPt.y - wrapRect.top - 40)}px`;
       bar.classList.add('visible');
     }
+
+    document.getElementById('floatLiveSlider')?.addEventListener('input', (e) => {
+      const comp = labState.components.find((c) => c.id === labState.selectedComponentId);
+      if (!comp) return;
+      const v = Number(e.target.value);
+      if (comp.kind === 'dc_source' || comp.kind === 'ac_source') comp.voltageV = v;
+      else if (comp.kind === 'potentiometer') comp.resistanceOhms = v;
+      else if (comp.kind === 'capacitor') comp.capacitanceUf = v;
+      else if (comp.kind === 'inductor') comp.inductanceMh = v;
+      comp.name = formatComponentName(comp);
+      labState.revision++;
+      render();
+    });
 
     document.getElementById('floatBtnEdit')?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1646,12 +1724,28 @@
        ============================================================== */
     function getPortLocalCoords(comp, idx) {
       const rot = (comp.rotation || 0) % 360;
-      const baseX = portLocalX(comp, idx); // 0 or 120
-      const isLeft = baseX === 0;
-      if (rot === 0) return { x: isLeft ? 0 : 120, y: 40, dx: isLeft ? -1 : 1, dy: 0 };
-      if (rot === 90) return { x: 60, y: isLeft ? 0 : 80, dx: 0, dy: isLeft ? -1 : 1 };
-      if (rot === 180) return { x: isLeft ? 120 : 0, y: 40, dx: isLeft ? 1 : -1, dy: 0 };
-      return { x: 60, y: isLeft ? 80 : 0, dx: 0, dy: isLeft ? 1 : -1 };
+      let bx = 0, by = 40, bdx = -1, bdy = 0;
+      if (comp.kind === 'logic_input') {
+        bx = 120; by = 40; bdx = 1; bdy = 0;
+      } else if (comp.kind === 'logic_probe') {
+        bx = 0; by = 40; bdx = -1; bdy = 0;
+      } else if (comp.ports.length === 3) {
+        if (idx === 0) { bx = 0; by = 26; bdx = -1; bdy = 0; }
+        else if (idx === 1) { bx = 0; by = 54; bdx = -1; bdy = 0; }
+        else { bx = 120; by = 40; bdx = 1; bdy = 0; }
+      } else {
+        const baseX = portLocalX(comp, idx);
+        const isLeft = baseX === 0;
+        bx = isLeft ? 0 : 120; by = 40; bdx = isLeft ? -1 : 1; bdy = 0;
+      }
+      // Rotate (bx, by) around center (60, 40)
+      const rad = (rot * Math.PI) / 180;
+      const cos = Math.round(Math.cos(rad)), sin = Math.round(Math.sin(rad));
+      const rx = 60 + (bx - 60) * cos - (by - 40) * sin;
+      const ry = 40 + (bx - 60) * sin + (by - 40) * cos;
+      const rdx = bdx * cos - bdy * sin;
+      const rdy = bdx * sin + bdy * cos;
+      return { x: rx, y: ry, dx: rdx, dy: rdy };
     }
 
     function getPortWorldCoords(portId) {
@@ -1666,7 +1760,7 @@
     }
 
     function computeWirePath(wire, baseRoutes) {
-      const hasRotated = labState.components.some((c) => (c.rotation || 0) !== 0);
+      const hasRotated = labState.components.some((c) => (c.rotation || 0) !== 0 || c.ports.length !== 2);
       const dy = wireOffsets.get(wire.id) || 0;
       if (!hasRotated) {
         const r = baseRoutes.get(wire.id);
@@ -1875,6 +1969,16 @@
           g.appendChild(glow);
         }
 
+        // Direct-click toggle for Digital Logic Input (0 <-> 1)
+        if (comp.kind === 'logic_input') {
+          const liHit = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          liHit.setAttribute('x', '28'); liHit.setAttribute('y', '20'); liHit.setAttribute('width', '50'); liHit.setAttribute('height', '40');
+          liHit.setAttribute('fill', 'transparent'); liHit.setAttribute('class', 'switch-toggle-hitbox');
+          liHit.addEventListener('pointerdown', (e) => { if (e.button === 0) e.stopPropagation(); });
+          liHit.addEventListener('click', (e) => { e.stopPropagation(); comp.logicValue = comp.logicValue ? 0 : 1; comp.name = formatComponentName(comp); labState.revision++; render(); });
+          g.appendChild(liHit);
+        }
+
         // Direct-click switch lever hitbox
         if (comp.kind === 'switch') {
           const swHit = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -2050,7 +2154,7 @@
     svgEl?.addEventListener('pointerdown', (e) => {
       if (e.target.id !== 'circuitCanvas' && e.target.id !== 'gridLayer') return;
       hideContextMenu();
-      if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+      if (e.button === 1 || (e.button === 0 && e.shiftKey) || e.pointerType === 'touch') {
         panContext = { startX: e.clientX, startY: e.clientY, origX: viewBoxState.x, origY: viewBoxState.y };
         return;
       }
@@ -2192,11 +2296,16 @@
         ledStatus.textContent = currentLang === 'ar' ? 'مضيء (ON)' : 'ON';
         ledStatus.style.color = 'var(--accent-orange)';
         if (ledGlow) { ledGlow.setAttribute('fill', 'url(#ledGlow)'); ledGlow.classList.add('led-glow-active'); }
-        // Update lit schematic symbols for LED & Lamp
+        // Update lit schematic symbols ONLY for components carrying actual current (fixes unpowered lamp bug!)
+        const activeComps = sim.isExtended ? new Set(sim.activeCompIds || []) : new Set(labState.components.map((c) => c.id));
+        const logicStates = sim.logicStates || {};
         labState.components.forEach((c) => {
+          const sym = document.querySelector(`[data-comp-id="${c.id}"] .schematic-symbol-group`);
+          if (!sym) return;
           if (c.kind === 'led' || c.kind === 'lamp') {
-            const sym = document.querySelector(`[data-comp-id="${c.id}"] .schematic-symbol-group`);
-            if (sym) sym.innerHTML = getSchematicSymbolMarkup(c, true);
+            sym.innerHTML = getSchematicSymbolMarkup(c, activeComps.has(c.id));
+          } else if (c.kind === 'logic_probe') {
+            sym.innerHTML = getSchematicSymbolMarkup(c, false, logicStates[c.id] || 0);
           }
         });
         const activeIds = sim.isExtended ? new Set(sim.activeWireIds || []) : new Set(labState.wires.map((w) => w.id));
@@ -2210,7 +2319,14 @@
         ledStatus.textContent = 'مطفأ (OFF)';
         ledStatus.style.color = 'var(--text-muted)';
         if (ledGlow) { ledGlow.setAttribute('fill', 'transparent'); ledGlow.classList.remove('led-glow-active'); }
-        syncWireFlowOverlays(new Set());
+        const logicStatesOpen = sim.logicStates || {};
+        labState.components.forEach((c) => {
+          if (c.kind === 'logic_probe') {
+            const sym = document.querySelector(`[data-comp-id="${c.id}"] .schematic-symbol-group`);
+            if (sym) sym.innerHTML = getSchematicSymbolMarkup(c, false, logicStatesOpen[c.id] || 0);
+          }
+        });
+        syncWireFlowOverlays(new Set(sim.activeWireIds || []));
       } else if (sim.status === 'unsafe') {
         circuitBadge.className = 'status-badge status-badge-unsafe';
         circuitBadge.textContent = currentLang === 'ar' ? 'حالة غير آمنة!' : 'Unsafe State!';

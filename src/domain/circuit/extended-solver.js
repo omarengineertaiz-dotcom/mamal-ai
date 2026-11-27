@@ -1,7 +1,7 @@
 /**
- * Mamal AI v3.1 - Extended Educational Circuit Solver (MNA + Per-Wire Active Flow)
- * Computes node voltages, total current, equivalent resistance, and exact active
- * wire IDs so current animation ONLY appears on wires carrying real current.
+ * Mamal AI v3.1.3 - Extended Educational Circuit Solver (Analog MNA + Digital Logic Engine)
+ * Computes node voltages, total current, Req, exact activeCompIds, activeWireIds,
+ * AND evaluates Digital Logic networks (LOGIC_INPUT -> Gates -> LOGIC_PROBE).
  */
 
 export function formatCurrent(amps) {
@@ -22,16 +22,99 @@ export function formatResistance(ohms) {
   return `${Math.round(ohms * 10) / 10}Ω`;
 }
 
+const DIGITAL_KINDS = new Set([
+  'logic_input', 'logic_probe',
+  'gate_and', 'gate_or', 'gate_not', 'gate_nand', 'gate_nor', 'gate_xor', 'gate_xnor',
+]);
+
 /**
- * Returns the Set of wire IDs that belong to electrically energized nets
- * connected to an active source loop with non-zero current.
+ * Evaluates all digital logic components on the canvas by propagating logic levels (0/1).
+ * Returns { logicStates: { [compId]: 0|1 }, highWireIds: string[], hasDigital: boolean }.
  */
-function findEnergizedWireIds(components, wires, find, activeCompIds) {
-  // Build component-level adjacency only through components that carry current (or closed switches/sources)
-  const portToComp = new Map();
-  for (const c of components) {
-    for (const p of c.ports || []) portToComp.set(p.id, c);
+export function evaluateDigitalNetwork(components, wires) {
+  const digitalComps = components.filter((c) => DIGITAL_KINDS.has(c.kind));
+  if (digitalComps.length === 0) return { logicStates: {}, highWireIds: [], hasDigital: false };
+
+  // Build port-to-port net adjacency via union-find
+  const portIds = new Set();
+  for (const c of components) for (const p of c.ports || []) portIds.add(p.id);
+  const parent = new Map([...portIds].map((id) => [id, id]));
+  const find = (id) => {
+    let cur = id;
+    while (parent.get(cur) !== cur) cur = parent.get(cur);
+    return cur;
+  };
+  for (const w of wires) {
+    if (parent.has(w.fromPortId) && parent.has(w.toPortId)) {
+      parent.set(find(w.fromPortId), find(w.toPortId));
+    }
   }
+
+  const netValue = new Map(); // netRoot -> 0 | 1
+  const logicStates = {};
+
+  // Seed logic inputs
+  for (const c of digitalComps) {
+    if (c.kind === 'logic_input') {
+      const val = c.logicValue ? 1 : 0;
+      logicStates[c.id] = val;
+      if (c.ports[0]) netValue.set(find(c.ports[0].id), val);
+    }
+  }
+
+  // Iterative propagation (up to 12 passes handles deep multi-gate chains)
+  for (let pass = 0; pass < 12; pass++) {
+    let changed = false;
+    for (const c of digitalComps) {
+      if (c.kind === 'logic_input' || c.kind === 'logic_probe') continue;
+      const inA = c.ports[0] ? (netValue.get(find(c.ports[0].id)) ?? 0) : 0;
+      const inB = c.kind === 'gate_not' ? 0 : (c.ports[1] ? (netValue.get(find(c.ports[1].id)) ?? 0) : 0);
+      const outPort = c.kind === 'gate_not' ? c.ports[1] : c.ports[2];
+      let y = 0;
+      if (c.kind === 'gate_not') y = inA ? 0 : 1;
+      else if (c.kind === 'gate_and') y = (inA && inB) ? 1 : 0;
+      else if (c.kind === 'gate_or') y = (inA || inB) ? 1 : 0;
+      else if (c.kind === 'gate_nand') y = (inA && inB) ? 0 : 1;
+      else if (c.kind === 'gate_nor') y = (inA || inB) ? 0 : 1;
+      else if (c.kind === 'gate_xor') y = (inA !== inB) ? 1 : 0;
+      else if (c.kind === 'gate_xnor') y = (inA === inB) ? 1 : 0;
+
+      if (logicStates[c.id] !== y) {
+        logicStates[c.id] = y;
+        changed = true;
+      }
+      if (outPort) {
+        const net = find(outPort.id);
+        if (netValue.get(net) !== y) {
+          netValue.set(net, y);
+          changed = true;
+        }
+      }
+    }
+    if (!changed) break;
+  }
+
+  // Read probe states
+  for (const c of digitalComps) {
+    if (c.kind === 'logic_probe' && c.ports[0]) {
+      logicStates[c.id] = netValue.get(find(c.ports[0].id)) ?? 0;
+    }
+  }
+
+  // Highlight wires on HIGH (1) nets
+  const highWireIds = [];
+  for (const w of wires) {
+    if (parent.has(w.fromPortId) && netValue.get(find(w.fromPortId)) === 1) {
+      highWireIds.push(w.id);
+    }
+  }
+
+  return { logicStates, highWireIds, hasDigital: true };
+}
+
+function findEnergizedWireIds(components, wires, find, activeCompIds) {
+  const portToComp = new Map();
+  for (const c of components) for (const p of c.ports || []) portToComp.set(p.id, c);
   const activeNets = new Set();
   for (const c of components) {
     if (!activeCompIds.has(c.id)) continue;
@@ -52,9 +135,10 @@ function findEnergizedWireIds(components, wires, find, activeCompIds) {
 export function simulateExtended(snapshot) {
   const components = snapshot?.components || [];
   const wires = snapshot?.wires || [];
+  const digital = evaluateDigitalNetwork(components, wires);
 
   const result = {
-    modelVersion: '3.1.0',
+    modelVersion: '3.1.3',
     status: 'open',
     values: {
       sourceVoltageV: null,
@@ -65,7 +149,9 @@ export function simulateExtended(snapshot) {
       nodeDetails: [],
     },
     ledOn: false,
-    activeWireIds: [],
+    activeCompIds: [],
+    activeWireIds: [...digital.highWireIds],
+    logicStates: digital.logicStates,
     diagnostics: [],
     isExtended: true,
   };
@@ -73,7 +159,20 @@ export function simulateExtended(snapshot) {
   const sources = components.filter(
     (c) => c.kind === 'dc_source' || c.kind === 'ac_source' || c.kind === 'current_source'
   );
+
+  // Pure digital circuit (no analog source needed)
   if (sources.length === 0) {
+    if (digital.hasDigital) {
+      result.status = 'valid';
+      result.diagnostics.push({
+        code: 'DIGITAL_OK',
+        severity: 'info',
+        affectedIds: [],
+        messageAr: 'الدائرة الرقمية نشطة. انقر على المداخل المنطقية (0/1) لتجربة جدول الحقيقة.',
+        messageEn: 'Digital logic circuit active. Click logic inputs (0/1) to test outputs.',
+      });
+      return result;
+    }
     result.diagnostics.push({
       code: 'OPEN_CIRCUIT',
       severity: 'info',
@@ -84,10 +183,10 @@ export function simulateExtended(snapshot) {
     return result;
   }
 
+  const analogComps = components.filter((c) => !DIGITAL_KINDS.has(c.kind));
   const ports = new Map();
-  for (const c of components) {
-    for (const p of c.ports || []) ports.set(p.id, { ...p, component: c });
-  }
+  for (const c of analogComps) for (const p of c.ports || []) ports.set(p.id, { ...p, component: c });
+
   const parent = new Map([...ports.keys()].map((id) => [id, id]));
   const find = (id) => {
     let cur = id;
@@ -100,16 +199,12 @@ export function simulateExtended(snapshot) {
     }
     return cur;
   };
-  const union = (a, b) => {
-    if (parent.has(a) && parent.has(b)) parent.set(find(a), find(b));
-  };
+  const union = (a, b) => { if (parent.has(a) && parent.has(b)) parent.set(find(a), find(b)); };
 
   for (const w of wires) {
     if (ports.has(w.fromPortId) && ports.has(w.toPortId)) union(w.fromPortId, w.toPortId);
   }
-
-  // Closed switches & inductors (DC steady state) conduct directly
-  for (const c of components) {
+  for (const c of analogComps) {
     if ((c.kind === 'switch' && !c.isOpen) || c.kind === 'inductor') {
       if (c.ports.length === 2) union(c.ports[0].id, c.ports[1].id);
     }
@@ -141,7 +236,7 @@ export function simulateExtended(snapshot) {
   const netIdx = new Map(netList.map((n, i) => [n, i]));
 
   const nNodes = netList.length - 1;
-  const vSources = components.filter((c) => c.kind === 'dc_source' || c.kind === 'ac_source');
+  const vSources = analogComps.filter((c) => c.kind === 'dc_source' || c.kind === 'ac_source');
   const m = vSources.length;
   const size = nNodes + m;
   if (size <= 0) return result;
@@ -157,26 +252,18 @@ export function simulateExtended(snapshot) {
     const iB = netIdx.get(find(pB)) - 1;
     if (iA >= 0) A[iA][iA] += g;
     if (iB >= 0) A[iB][iB] += g;
-    if (iA >= 0 && iB >= 0) {
-      A[iA][iB] -= g;
-      A[iB][iA] -= g;
-    }
+    if (iA >= 0 && iB >= 0) { A[iA][iB] -= g; A[iB][iA] -= g; }
   };
 
-  for (const c of components) {
+  for (const c of analogComps) {
     if (c.ports.length < 2) continue;
-    const p0 = c.ports[0].id;
-    const p1 = c.ports[1].id;
-    if (c.kind === 'resistor' || c.kind === 'potentiometer' || c.kind === 'lamp') {
-      stampResistor(p0, p1, c.resistanceOhms ?? 100);
-    } else if (c.kind === 'led' || c.kind === 'diode') {
-      stampResistor(p0, p1, 220);
-    } else if (c.kind === 'capacitor') {
-      stampResistor(p0, p1, 1e9);
-    } else if (c.kind === 'current_source') {
+    const p0 = c.ports[0].id, p1 = c.ports[1].id;
+    if (c.kind === 'resistor' || c.kind === 'potentiometer' || c.kind === 'lamp') stampResistor(p0, p1, c.resistanceOhms ?? 100);
+    else if (c.kind === 'led' || c.kind === 'diode') stampResistor(p0, p1, 220);
+    else if (c.kind === 'capacitor') stampResistor(p0, p1, 1e9);
+    else if (c.kind === 'current_source') {
       const iVal = Number(c.currentA) || 0.02;
-      const iPos = netIdx.get(find(p0)) - 1;
-      const iNeg = netIdx.get(find(p1)) - 1;
+      const iPos = netIdx.get(find(p0)) - 1, iNeg = netIdx.get(find(p1)) - 1;
       if (iPos >= 0) z[iPos] += iVal;
       if (iNeg >= 0) z[iNeg] -= iVal;
     }
@@ -205,36 +292,26 @@ export function simulateExtended(snapshot) {
   else if (primarySource.kind === 'current_source') totalI = Number(primarySource.currentA) || 0.02;
 
   if (totalI < 1e-7) {
-    const hasOpenSwitch = components.some((c) => c.kind === 'switch' && c.isOpen);
-    const hasCap = components.some((c) => c.kind === 'capacitor');
+    const hasOpenSwitch = analogComps.some((c) => c.kind === 'switch' && c.isOpen);
     result.status = 'open';
     result.values.sourceVoltageV = Vs;
     result.values.circuitCurrentA = 0;
     result.values.resistorVoltageV = 0;
     result.diagnostics.push({
-      code: hasOpenSwitch ? 'SWITCH_OPEN' : hasCap ? 'CAPACITOR_CHARGED' : 'OPEN_CIRCUIT',
+      code: hasOpenSwitch ? 'SWITCH_OPEN' : 'OPEN_CIRCUIT',
       severity: 'info',
       affectedIds: [],
-      messageAr: hasOpenSwitch
-        ? 'المفتاح مفتوح؛ انقر عليه مباشرة لإغلاق الدائرة.'
-        : hasCap
-          ? `المكثف مشحون بالكامل عند ${Vs.toFixed(1)}V (التيار المستقر = 0).`
-          : 'الدائرة مفتوحة؛ أكمل التوصيل بين طرفي المصدر.',
-      messageEn: hasOpenSwitch
-        ? 'Switch is open; click it directly to close the circuit.'
-        : hasCap
-          ? `Capacitor fully charged to ${Vs.toFixed(1)}V (steady-state DC current = 0).`
-          : 'Open circuit; complete the loop between source terminals.',
+      messageAr: hasOpenSwitch ? 'المفتاح مفتوح؛ انقر عليه مباشرة لإغلاق الدائرة.' : 'الدائرة مفتوحة؛ أكمل التوصيل بين طرفي المصدر.',
+      messageEn: hasOpenSwitch ? 'Switch is open; click it directly to close the circuit.' : 'Open circuit; complete the loop between source terminals.',
     });
     return result;
   }
 
-  // Track ONLY components actually carrying non-zero current
   const activeCompIds = new Set([primarySource.id]);
   const details = [];
   let firstVoltage = null;
 
-  for (const c of components) {
+  for (const c of analogComps) {
     if (c.ports.length < 2) continue;
     const vDrop = Math.abs(nodeV(c.ports[0].id) - nodeV(c.ports[1].id));
     if (c.kind === 'resistor' || c.kind === 'potentiometer' || c.kind === 'lamp') {
@@ -248,24 +325,24 @@ export function simulateExtended(snapshot) {
     } else if (c.kind === 'led' || c.kind === 'diode') {
       if (vDrop / 220 > 1e-7) activeCompIds.add(c.id);
     } else if ((c.kind === 'switch' && !c.isOpen) || c.kind === 'inductor') {
-      // Conductive only if its net is energized and part of a closed path (voltage > 0 or connected to active net)
       const n0 = find(c.ports[0].id);
-      if (n0 === netPos || n0 === netNeg || Math.abs(nodeV(c.ports[0].id)) > 1e-6) {
-        activeCompIds.add(c.id);
-      }
+      if (n0 === netPos || n0 === netNeg || Math.abs(nodeV(c.ports[0].id)) > 1e-6) activeCompIds.add(c.id);
     }
   }
 
-  const energizedWires = findEnergizedWireIds(components, wires, find, activeCompIds);
+  const energizedWires = findEnergizedWireIds(analogComps, wires, find, activeCompIds);
+  digital.highWireIds.forEach((id) => energizedWires.add(id));
+
   const req = totalI > 1e-9 ? Vs / totalI : null;
   result.status = 'valid';
-  result.ledOn = components.some((c) => (c.kind === 'led' || c.kind === 'lamp') && activeCompIds.has(c.id));
+  result.activeCompIds = [...activeCompIds];
+  result.ledOn = analogComps.some((c) => (c.kind === 'led' || c.kind === 'lamp') && activeCompIds.has(c.id));
   result.activeWireIds = [...energizedWires];
   result.values = {
     sourceVoltageV: Vs,
     circuitCurrentA: totalI,
     resistorVoltageV: firstVoltage ?? Vs,
-    ledForwardVoltageV: components.some((c) => c.kind === 'led' && activeCompIds.has(c.id)) ? 2.0 : null,
+    ledForwardVoltageV: analogComps.some((c) => c.kind === 'led' && activeCompIds.has(c.id)) ? 2.0 : null,
     equivalentResistanceOhms: req,
     nodeDetails: details,
   };
