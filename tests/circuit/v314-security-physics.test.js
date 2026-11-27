@@ -126,3 +126,78 @@ test('V314-TUTOR-001: Tutor function enforces CORS allowlist, method check, and 
   assert.equal(hugeBody.statusCode, 413);
   assert.equal(hugeBody.headers['Access-Control-Allow-Origin'], 'https://mamal-ai.netlify.app');
 });
+
+
+test('V315-PHYS-001: 0V voltage source produces 0V and 0A (never coerced to 5V)', () => {
+  const res = simulateExtended({
+    components: [
+      { id: 'v0', kind: 'dc_source', name: 'DC 0V', voltageV: 0, ports: [{ id: 'v0_p', role: 'pos' }, { id: 'v0_n', role: 'neg' }] },
+      { id: 'r1', kind: 'resistor', name: 'R1', resistanceOhms: 100, ports: [{ id: 'r1_1' }, { id: 'r1_2' }] },
+    ],
+    wires: [
+      { id: 'w1', fromPortId: 'v0_p', toPortId: 'r1_1' },
+      { id: 'w2', fromPortId: 'r1_2', toPortId: 'v0_n' },
+    ],
+  });
+  assert.equal(res.status, 'open');
+  assert.equal(res.values.sourceVoltageV, 0);
+  assert.equal(res.values.circuitCurrentA, 0);
+  assert.equal(res.diagnostics.some((d) => d.code === 'ZERO_SOURCE'), true);
+});
+
+test('V315-PHYS-002: 0A current source produces 0A (never coerced to 20mA)', () => {
+  const res = simulateExtended({
+    components: [
+      { id: 'i0', kind: 'current_source', name: 'I 0A', currentA: 0, ports: [{ id: 'i0_p', role: 'pos' }, { id: 'i0_n', role: 'neg' }] },
+      { id: 'r1', kind: 'resistor', name: 'R1', resistanceOhms: 100, ports: [{ id: 'r1_1' }, { id: 'r1_2' }] },
+    ],
+    wires: [
+      { id: 'w1', fromPortId: 'i0_p', toPortId: 'r1_1' },
+      { id: 'w2', fromPortId: 'r1_2', toPortId: 'i0_n' },
+    ],
+  });
+  assert.equal(res.status, 'open');
+  assert.equal(res.values.circuitCurrentA, 0);
+});
+
+test('V315-PHYS-003: Parallel active resistor + reversed LED keeps circuit valid but ledOn=false', () => {
+  const res = simulateExtended({
+    components: [
+      { id: 'src', kind: 'dc_source', name: 'DC 5V', voltageV: 5, ports: [{ id: 's_p', role: 'pos' }, { id: 's_n', role: 'neg' }] },
+      { id: 'r_ok', kind: 'resistor', name: 'R_OK', resistanceOhms: 500, ports: [{ id: 'r_1' }, { id: 'r_2' }] },
+      { id: 'led_rev', kind: 'led', name: 'LED_REV', forwardVoltageV: 2.0, ports: [{ id: 'l_a', role: 'anode' }, { id: 'l_k', role: 'cathode' }] },
+    ],
+    wires: [
+      { id: 'w1', fromPortId: 's_p', toPortId: 'r_1' },
+      { id: 'w2', fromPortId: 'r_2', toPortId: 's_n' },
+      { id: 'w3', fromPortId: 's_p', toPortId: 'l_k' },
+      { id: 'w4', fromPortId: 'l_a', toPortId: 's_n' },
+    ],
+  });
+  assert.equal(res.status, 'valid');
+  assert.equal(res.ledOn, false);
+  assert.equal(res.activeCompIds.includes('r_ok'), true);
+  assert.equal(res.activeCompIds.includes('led_rev'), false);
+  assert.equal(res.diagnostics.some((d) => d.code === 'REVERSED_LED'), true);
+});
+
+test('V315-SEC-001: Sanitizer rejects duplicate port IDs in imported circuits', () => {
+  assert.throws(() => validateAndSanitizeCircuitPayload({
+    components: [
+      { id: 'c1', kind: 'resistor', ports: [{ id: 'dup_p' }, { id: 'p2' }] },
+      { id: 'c2', kind: 'resistor', ports: [{ id: 'dup_p' }, { id: 'p3' }] },
+    ],
+    wires: [],
+  }), /DUPLICATE_PORT_ID/);
+});
+
+test('V315-SEC-002: Sanitizer parses string "false" as boolean false, not true', () => {
+  const clean = validateAndSanitizeCircuitPayload({
+    components: [
+      { id: 'sw1', kind: 'switch', isOpen: 'false', isVariable: 'false', ports: [{ id: 'sw_1' }, { id: 'sw_2' }] },
+    ],
+    wires: [],
+  });
+  assert.equal(clean.components[0].isOpen, false);
+  assert.equal(clean.components[0].isVariable, undefined);
+});

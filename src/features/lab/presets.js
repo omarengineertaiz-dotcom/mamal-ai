@@ -1,5 +1,5 @@
 /**
- * Mamal AI v3.1.3 - Multisim Component Library (Fixed & Variable + Digital Logic + ANSI/IEC Symbols)
+ * Mamal AI v3.1.5 - Multisim Component Library (Fixed & Variable + Digital Logic + ANSI/IEC Symbols)
  */
 
 export const COMPONENT_GROUPS = [

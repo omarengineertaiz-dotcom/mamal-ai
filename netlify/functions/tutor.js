@@ -1,5 +1,5 @@
 /**
- * Mamal AI v3.1.4 - Hardened Netlify Serverless Function for Gemini AI Tutor
+ * Mamal AI v3.1.5 - Hardened Netlify Serverless Function for Gemini AI Tutor
  * Enforces Origin allowlist CORS, payload size cap, input validation, per-IP rate limiting, and upstream timeout.
  */
 
@@ -18,11 +18,23 @@ const ALLOWED_ORIGIN_PATTERNS = [
   /^http:\/\/127\.0\.0\.1(:\d+)?$/,
 ];
 
+// Note: In-memory per-IP rate limiting protects warm instances; for multi-region scale, back with Redis/Upstash.
 function resolveAllowedOrigin(event) {
   const origin = event.headers?.origin || event.headers?.Origin || '';
-  if (!origin) return 'https://mamal-ai.netlify.app';
-  if (ALLOWED_ORIGIN_PATTERNS.some((re) => re.test(origin))) return origin;
-  return null;
+  if (origin) {
+    return ALLOWED_ORIGIN_PATTERNS.some((re) => re.test(origin)) ? origin : null;
+  }
+  const referer = event.headers?.referer || event.headers?.Referer || '';
+  if (referer) {
+    try {
+      const refOrigin = new URL(referer).origin;
+      return ALLOWED_ORIGIN_PATTERNS.some((re) => re.test(refOrigin)) ? refOrigin : null;
+    } catch (_e) {
+      return null;
+    }
+  }
+  if (process.env.NETLIFY === 'true') return null;
+  return 'https://mamal-ai.netlify.app';
 }
 
 function checkRateLimit(ip) {

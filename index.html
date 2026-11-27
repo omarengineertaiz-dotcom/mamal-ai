@@ -580,7 +580,7 @@
         <div class="brand-symbol">⚡</div>
         <div class="brand-text-title">
           <span data-i18n="brandName">معمل AI</span>
-          <span class="brand-badge">v3.1.4</span>
+          <span class="brand-badge">v3.1.5</span>
         </div>
       </a>
     </div>
@@ -2296,9 +2296,15 @@
         currentEl.textContent = fmt.value;
         if (currentUnitEl) currentUnitEl.textContent = fmt.unit;
         vrEl.textContent = sim.values.resistorVoltageV !== null ? sim.values.resistorVoltageV.toFixed(2) : '—';
-        ledStatus.textContent = currentLang === 'ar' ? 'مضيء (ON)' : 'ON';
-        ledStatus.style.color = 'var(--accent-orange)';
-        if (ledGlow) { ledGlow.setAttribute('fill', 'url(#ledGlow)'); ledGlow.classList.add('led-glow-active'); }
+        const isLedLit = Boolean(sim.ledOn);
+        ledStatus.textContent = isLedLit
+          ? (currentLang === 'ar' ? 'مضيء (ON)' : 'ON')
+          : (currentLang === 'ar' ? 'مطفأ (OFF)' : 'OFF');
+        ledStatus.style.color = isLedLit ? 'var(--accent-orange)' : 'var(--text-muted)';
+        if (ledGlow) {
+          if (isLedLit) { ledGlow.setAttribute('fill', 'url(#ledGlow)'); ledGlow.classList.add('led-glow-active'); }
+          else { ledGlow.setAttribute('fill', 'transparent'); ledGlow.classList.remove('led-glow-active'); }
+        }
         // Update lit schematic symbols ONLY for components carrying actual current (fixes unpowered lamp bug!)
         const activeComps = sim.isExtended ? new Set(sim.activeCompIds || []) : new Set(labState.components.map((c) => c.id));
         const logicStates = sim.logicStates || {};
@@ -2487,7 +2493,7 @@
         question: questionText.trim(),
         history: tutorHistory.slice(-6),
         evidence: {
-          modelVersion: '3.1.4',
+          modelVersion: '3.1.5',
           status: sim.status,
           diagnostics: sim.diagnostics,
           measurements: sim.values,

@@ -1,5 +1,5 @@
 /**
- * Mamal AI v3.1.4 - Circuit Import Validator & Sanitizer
+ * Mamal AI v3.1.5 - Circuit Import Validator & Sanitizer
  * Protects against XSS / SVG injection when loading external .mamal or .json files.
  */
 
@@ -43,6 +43,17 @@ function sanitizeId(value, fallback) {
   return fallback;
 }
 
+function parseStrictBoolean(value) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value === 1;
+  if (typeof value === 'string') {
+    const s = value.trim().toLowerCase();
+    if (s === 'true' || s === '1') return true;
+    if (s === 'false' || s === '0' || s === '') return false;
+  }
+  return false;
+}
+
 export function validateAndSanitizeCircuitPayload(parsed) {
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('INVALID_PAYLOAD');
@@ -73,6 +84,7 @@ export function validateAndSanitizeCircuitPayload(parsed) {
       const rp = rawPorts[pIdx];
       if (!rp || typeof rp !== 'object') continue;
       const pid = sanitizeId(rp.id, `${id}_p${pIdx}`);
+      if (validPortIds.has(pid)) throw new Error('DUPLICATE_PORT_ID');
       validPortIds.add(pid);
       ports.push({
         id: pid,
@@ -98,7 +110,7 @@ export function validateAndSanitizeCircuitPayload(parsed) {
       ports,
     };
 
-    if (raw.isVariable === true) comp.isVariable = true;
+    if (parseStrictBoolean(raw.isVariable)) comp.isVariable = true;
     if (raw.voltageV !== undefined) comp.voltageV = sanitizeFiniteNumber(raw.voltageV, 5, 0, 10000);
     if (raw.frequencyHz !== undefined) comp.frequencyHz = sanitizeFiniteNumber(raw.frequencyHz, 50, 0.1, 1e9);
     if (raw.resistanceOhms !== undefined) comp.resistanceOhms = sanitizeFiniteNumber(raw.resistanceOhms, 330, 0.01, 1e9);
@@ -107,8 +119,8 @@ export function validateAndSanitizeCircuitPayload(parsed) {
     if (raw.currentA !== undefined) comp.currentA = sanitizeFiniteNumber(raw.currentA, 0.02, 0, 1000);
     if (raw.forwardVoltageV !== undefined) comp.forwardVoltageV = sanitizeFiniteNumber(raw.forwardVoltageV, 2.0, 0.1, 20);
     if (raw.maxCurrentA !== undefined) comp.maxCurrentA = sanitizeFiniteNumber(raw.maxCurrentA, 0.02, 0.001, 10);
-    if (raw.isOpen !== undefined) comp.isOpen = Boolean(raw.isOpen);
-    if (raw.logicValue !== undefined) comp.logicValue = raw.logicValue ? 1 : 0;
+    if (raw.isOpen !== undefined) comp.isOpen = parseStrictBoolean(raw.isOpen);
+    if (raw.logicValue !== undefined) comp.logicValue = parseStrictBoolean(raw.logicValue) ? 1 : 0;
     if (raw.kind === 'led') comp.ledColor = sanitizeHexColor(raw.ledColor, '#FF4D4F');
 
     components.push(comp);

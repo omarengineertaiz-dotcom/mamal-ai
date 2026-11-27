@@ -1,5 +1,5 @@
 /**
- * Mamal AI v3.1.4 - Extended Educational Circuit Solver (Analog MNA + Nonlinear Diode/LED + Digital Logic Engine)
+ * Mamal AI v3.1.5 - Extended Educational Circuit Solver (Analog MNA + Nonlinear Diode/LED + Digital Logic Engine)
  * Computes node voltages, total current, Req, exact activeCompIds, activeWireIds,
  * enforces Diode/LED forward polarity & Vf threshold, and evaluates Digital Logic networks.
  */
@@ -156,7 +156,7 @@ export function simulateExtended(snapshot) {
   const digital = evaluateDigitalNetwork(components, wires);
 
   const result = {
-    modelVersion: '3.1.4',
+    modelVersion: '3.1.5',
     status: 'open',
     values: {
       sourceVoltageV: null,
@@ -302,7 +302,8 @@ export function simulateExtended(snapshot) {
       } else if (c.kind === 'capacitor') {
         stampResistor(p0, p1, 1e9);
       } else if (c.kind === 'current_source') {
-        const iVal = Number(c.currentA) || 0.02;
+        const rawI = Number(c.currentA);
+        const iVal = Number.isFinite(rawI) ? rawI : 0.02;
         const iPos = netIdx.get(find(p0)) - 1, iNeg = netIdx.get(find(p1)) - 1;
         if (iPos >= 0) z[iPos] += iVal;
         if (iNeg >= 0) z[iNeg] -= iVal;
@@ -315,7 +316,8 @@ export function simulateExtended(snapshot) {
       const iNeg = netIdx.get(find(src.ports[1].id)) - 1;
       if (iPos >= 0) { A[iPos][row] += 1; A[row][iPos] += 1; }
       if (iNeg >= 0) { A[iNeg][row] -= 1; A[row][iNeg] -= 1; }
-      z[row] = Number(src.voltageV) || 5;
+      const rawV = Number(src.voltageV);
+      z[row] = Number.isFinite(rawV) ? rawV : 5;
     });
 
     return solveLinearSystem(A, z);
@@ -360,10 +362,14 @@ export function simulateExtended(snapshot) {
     return idx === 0 ? 0 : x[idx - 1];
   };
 
-  const Vs = Number(primarySource.voltageV) || Math.abs(nodeV(posPort) - nodeV(negPort)) || 5;
+  const rawVs = primarySource.voltageV !== undefined ? Number(primarySource.voltageV) : NaN;
+  const Vs = Number.isFinite(rawVs) ? rawVs : Math.abs(nodeV(posPort) - nodeV(negPort));
   let totalI = 0;
   if (vSources.length > 0) totalI = Math.abs(x[nNodes]);
-  else if (primarySource.kind === 'current_source') totalI = Number(primarySource.currentA) || 0.02;
+  else if (primarySource.kind === 'current_source') {
+    const rawPrimaryI = Number(primarySource.currentA);
+    totalI = Number.isFinite(rawPrimaryI) ? Math.abs(rawPrimaryI) : 0.02;
+  }
 
   // Detect reversed or under-voltage diodes/LEDs
   const reversedLeds = [];
@@ -436,6 +442,14 @@ export function simulateExtended(snapshot) {
         messageAr: 'الدايود في حالة انحياز عكسي يمنع مرور التيار. اعكس اتجاهه إذا كنت تريد التوصيل الأمامي.',
         messageEn: 'Diode is reverse-biased and blocking current. Flip its orientation for forward conduction.',
       });
+    } else if ((primarySource.kind !== 'current_source' && Math.abs(Vs) < 1e-9) || (primarySource.kind === 'current_source' && totalI < 1e-9)) {
+      result.diagnostics.push({
+        code: 'ZERO_SOURCE',
+        severity: 'info',
+        affectedIds: [primarySource.id],
+        messageAr: 'قيمة مصدر الطاقة تساوي صفراً (0)؛ ارفع قيمة الجهد أو التيار لبدء سريان التيار.',
+        messageEn: 'Power source value is zero (0); increase voltage or current to drive the circuit.',
+      });
     } else {
       result.diagnostics.push({
         code: hasOpenSwitch ? 'SWITCH_OPEN' : 'OPEN_CIRCUIT',
@@ -473,7 +487,7 @@ export function simulateExtended(snapshot) {
   const req = totalI > 1e-9 ? Vs / totalI : null;
   result.status = 'valid';
   result.activeCompIds = [...activeCompIds];
-  result.ledOn = analogComps.some((c) => (c.kind === 'led' || c.kind === 'lamp') && activeCompIds.has(c.id));
+  result.ledOn = analogComps.some((c) => c.kind === 'led' && activeCompIds.has(c.id));
   result.activeWireIds = [...energizedWires];
   result.values = {
     sourceVoltageV: Vs,
