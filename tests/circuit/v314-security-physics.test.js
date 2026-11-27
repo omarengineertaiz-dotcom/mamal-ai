@@ -201,3 +201,30 @@ test('V315-SEC-002: Sanitizer parses string "false" as boolean false, not true',
   assert.equal(clean.components[0].isOpen, false);
   assert.equal(clean.components[0].isVariable, undefined);
 });
+
+
+test('V316-NETLIFY-001: netlify.toml blocks public access to /docs, /tests, and /netlify', async () => {
+  const fs = await import('node:fs');
+  const toml = fs.readFileSync('netlify.toml', 'utf8');
+  assert.ok(toml.includes('from = "/docs/*"'));
+  assert.ok(toml.includes('from = "/tests/*"'));
+  assert.ok(toml.includes('status = 404'));
+});
+
+test('V316-TUTOR-002: tutor.js uses x-goog-api-key header, thinkingBudget 0, and hides raw error details', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync('netlify/functions/tutor.js', 'utf8');
+  assert.ok(src.includes("'x-goog-api-key': apiKey"));
+  assert.equal(src.includes('?key='), false);
+  assert.ok(src.includes('thinkingBudget: 0'));
+  assert.ok(src.includes('maxOutputTokens: 1024'));
+});
+
+test('V316-UI-001: index.html includes Flip 180 button, Netlify Form, and empty-canvas tutor handling', async () => {
+  const fs = await import('node:fs');
+  const html = fs.readFileSync('index.html', 'utf8');
+  assert.ok(html.includes('id="floatBtnFlip"'));
+  assert.ok(html.includes('data-netlify="true"'));
+  assert.ok(html.includes('ساحة العمل فارغة حالياً!'));
+  assert.ok(html.includes('v3.1.6'));
+});

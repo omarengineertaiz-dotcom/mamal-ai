@@ -74,7 +74,7 @@ export const TRANSLATIONS = {
     tabElectricity: '⚡ تجارب الكهرباء',
     tabElectronics: '🔌 تجارب الإلكترونيات',
     expEmptyTitle: 'قريباً — تجارب موثّقة من المراجع الهندسية',
-    expEmptyDesc: 'نعمل حالياً على إدراج التجارب الموثّقة علمياً بدقة 100%. يمكنك الآن فتح المختبر الحر لبناء أي دائرة بمساعدة المرشد الذكي.',
+    expEmptyDesc: 'نعمل حالياً على إدراج التجارب الموثّقة علمياً بمحاكاة نموذجية دقيقة. يمكنك الآن فتح المختبر الحر لبناء أي دائرة بمساعدة المرشد الذكي.',
     expGoFreeLab: '⚡ افتح المختبر الحر الآن',
 
     // Lab
@@ -200,7 +200,7 @@ export const TRANSLATIONS = {
     f1Desc: "Accurate Ohm's and Kirchhoff's laws calculations with automatic current scaling (A / mA / µA).",
     f2Title: 'Step-by-Step Interactive AI Tutor',
     f2Desc: 'Guides you to place parts and wire them step by step, verifying your live schematic when you say Done.',
-    f3Title: '100% Safe Virtual Bench',
+    f3Title: 'Ideal-Model Simulation Virtual Bench',
     f3Desc: 'Test any voltage or resistance values freely without worrying about burning LEDs or components.',
     f4Title: 'Multisim-Inspired Library & Canvas',
     f4Desc: 'Full-width Zoom/Pan canvas, standard ANSI/IEC symbols, component picker modal, and 90° rotation.',

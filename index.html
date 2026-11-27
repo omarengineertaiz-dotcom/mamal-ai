@@ -464,7 +464,7 @@
         justify-content: center;
         align-items: center;
         gap: 10px;
-        padding: 8px 12px;
+        padding: 8px 12px 58px 12px;
         background: rgba(21, 23, 27, 0.96);
         border-top: 1px solid var(--color-border-default);
         flex-shrink: 0;
@@ -497,6 +497,7 @@
         transform: translateY(110%) !important;
         z-index: 160 !important;
         padding-top: 10px !important;
+        padding-bottom: 62px !important;
       }
       .lab-side-drawer.open {
         transform: translateY(0) !important;
@@ -507,7 +508,7 @@
       }
 
       /* Compact scrollable Select-a-Component modal on mobile */
-      .modal-overlay { padding: 8px; align-items: flex-end; }
+      .modal-overlay { padding: 8px 8px 62px 8px; align-items: flex-end; }
       .ms-picker-card {
         max-height: 85dvh;
         padding: 12px;
@@ -580,7 +581,7 @@
         <div class="brand-symbol">⚡</div>
         <div class="brand-text-title">
           <span data-i18n="brandName">معمل AI</span>
-          <span class="brand-badge">v3.1.5</span>
+          <span class="brand-badge">v3.1.6</span>
         </div>
       </a>
     </div>
@@ -689,14 +690,14 @@
             <div class="smoky-glass-panel exp-empty-box" id="expGridElectricity">
               <div style="font-size: 40px;">⚡</div>
               <h3 data-i18n="expEmptyTitle">قريباً — تجارب موثّقة من المراجع الهندسية</h3>
-              <p style="color:var(--text-secondary); max-width:520px; font-size:14px;" data-i18n="expEmptyDesc">نعمل حالياً على إدراج التجارب الموثّقة علمياً بدقة 100%. يمكنك الآن فتح المختبر الحر لبناء أي دائرة بمساعدة المرشد الذكي.</p>
+              <p style="color:var(--text-secondary); max-width:520px; font-size:14px;" data-i18n="expEmptyDesc">نعمل حالياً على إدراج التجارب الموثّقة علمياً بمحاكاة نموذجية دقيقة. يمكنك الآن فتح المختبر الحر لبناء أي دائرة بمساعدة المرشد الذكي.</p>
               <button type="button" class="glass-card-interactive glass-btn-primary" id="btnStartOhmsExperiment" aria-label="فتح المختبر الحر" tabindex="0" data-i18n="expGoFreeLab">⚡ افتح المختبر الحر الآن</button>
             </div>
 
             <div class="smoky-glass-panel exp-empty-box" id="expGridElectronics" style="display:none;">
               <div style="font-size: 40px;">🔌</div>
               <h3 data-i18n="expEmptyTitle">قريباً — تجارب موثّقة من المراجع الهندسية</h3>
-              <p style="color:var(--text-secondary); max-width:520px; font-size:14px;" data-i18n="expEmptyDesc">نعمل حالياً على إدراج التجارب الموثّقة علمياً بدقة 100%. يمكنك الآن فتح المختبر الحر لبناء أي دائرة بمساعدة المرشد الذكي.</p>
+              <p style="color:var(--text-secondary); max-width:520px; font-size:14px;" data-i18n="expEmptyDesc">نعمل حالياً على إدراج التجارب الموثّقة علمياً بمحاكاة نموذجية دقيقة. يمكنك الآن فتح المختبر الحر لبناء أي دائرة بمساعدة المرشد الذكي.</p>
               <button type="button" class="glass-card-interactive glass-btn-primary btn-go-free-lab" tabindex="0" data-i18n="expGoFreeLab">⚡ افتح المختبر الحر الآن</button>
             </div>
           </div>
@@ -761,8 +762,11 @@
                 <path id="tempWire" class="wire-temp" d="" style="display: none;"></path>
                 <g id="componentsLayer"></g>
                 <rect id="marqueeRect" class="marquee-rect" style="display:none;" x="0" y="0" width="0" height="0"></rect>
-                <!-- Clean blank canvas (guide hidden visually as requested) -->
-                <g id="emptyCanvasGuide" aria-hidden="true" pointer-events="none" style="opacity:0;"></g>
+                <!-- Subtle centered guide shown only when canvas is empty -->
+                <g id="emptyCanvasGuide" aria-hidden="true" pointer-events="none" style="opacity:0.75;">
+                  <text x="500" y="255" text-anchor="middle" fill="#94A3B8" font-size="16" font-weight="700" font-family="var(--font-family-ui)">ساحة العمل فارغة — اختر قطعة من الشريط العلوي</text>
+                  <text x="500" y="282" text-anchor="middle" fill="#64748B" font-size="13" font-family="var(--font-family-ui)">أو افتح «المرشد الذكي» واكتب: أريد دائرة قانون أوم</text>
+                </g>
               </svg>
 
               <!-- Floating Mini-Bar above Selected Component -->
@@ -773,6 +777,7 @@
                 </div>
                 <button type="button" class="lab-cmd-btn" id="floatBtnEdit" title="تعديل القيمة">⚙️</button>
                 <button type="button" class="lab-cmd-btn" id="floatBtnRotate" title="تدوير 90°">↻</button>
+                <button type="button" class="lab-cmd-btn" id="floatBtnFlip" title="عكس القطبية 180°">⇄</button>
                 <button type="button" class="lab-cmd-btn danger" id="floatBtnDelete" title="حذف">🗑️</button>
               </div>
             </section>
@@ -990,7 +995,8 @@
         <h3 style="font-size:16px; color:var(--accent-orange);" data-i18n="fbModalTitle">💬 اقتراح أو ملاحظة لتطوير معمل AI</h3>
         <button type="button" id="btnCloseFeedback" class="header-mini-btn">✕</button>
       </div>
-      <form id="feedbackForm" style="display:flex; flex-direction:column; gap:10px;">
+      <form id="feedbackForm" name="mamal-feedback" method="POST" data-netlify="true" style="display:flex; flex-direction:column; gap:10px;">
+        <input type="hidden" name="form-name" value="mamal-feedback" />
         <select id="fbType" class="styled-input">
           <option value="suggestion" data-i18n="fbOptSug">اقتراح ميزة جديدة</option>
           <option value="bug" data-i18n="fbOptBug">الإبلاغ عن مشكلة</option>
@@ -1607,7 +1613,7 @@
       const svg = document.getElementById('circuitCanvas');
       if (!bar || !svg) return;
       const comp = labState.components.find((c) => c.id === labState.selectedComponentId);
-      if (!comp || selectedCompIds.size > 1) { bar.classList.remove('visible'); return; }
+      if (!comp || selectedCompIds.size > 1 || labState.selectedPortId) { bar.classList.remove('visible'); return; }
       const ctm = svg.getScreenCTM();
       const wrapRect = svg.parentElement?.getBoundingClientRect();
       if (!ctm || !wrapRect) return;
@@ -1635,9 +1641,11 @@
           slWrap.style.display = 'none';
         }
       }
-      bar.style.left = `${Math.max(8, Math.min(wrapRect.width - 230, screenPt.x - wrapRect.left - 80))}px`;
-      bar.style.top = `${Math.max(8, screenPt.y - wrapRect.top - 40)}px`;
       bar.classList.add('visible');
+      const bw = bar.offsetWidth || 156;
+      const bh = bar.offsetHeight || 36;
+      bar.style.left = `${Math.max(8, Math.min(wrapRect.width - bw - 8, screenPt.x - wrapRect.left - bw / 2))}px`;
+      bar.style.top = `${Math.max(8, screenPt.y - wrapRect.top - bh - 10)}px`;
     }
 
     document.getElementById('floatLiveSlider')?.addEventListener('input', (e) => {
@@ -1661,6 +1669,14 @@
     document.getElementById('floatBtnRotate')?.addEventListener('click', (e) => {
       e.stopPropagation();
       if (labState.selectedComponentId) rotateComponent(labState.selectedComponentId);
+    });
+    document.getElementById('floatBtnFlip')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const comp = labState.components.find((c) => c.id === labState.selectedComponentId);
+      if (!comp) return;
+      comp.rotation = ((comp.rotation || 0) + 180) % 360;
+      labState.revision++;
+      render();
     });
     document.getElementById('floatBtnDelete')?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2003,7 +2019,7 @@
           circle.setAttribute('tabindex', '0');
           circle.setAttribute('aria-label', `${port.label} — ${comp.name}`);
           circle.addEventListener('pointerdown', (e) => e.stopPropagation());
-          circle.addEventListener('click', (e) => { e.stopPropagation(); onPortClick(port.id); });
+          circle.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('compFloatingBar')?.classList.remove('visible'); onPortClick(port.id); });
           g.appendChild(circle);
 
           const pLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -2119,6 +2135,8 @@
         compLayer.appendChild(g);
       });
 
+      const eg = document.getElementById('emptyCanvasGuide');
+      if (eg) eg.style.opacity = labState.components.length === 0 ? '0.8' : '0';
       positionFloatingBar();
       runSimulation();
     }
@@ -2138,11 +2156,15 @@
         }
       }
       if (panContext) {
+        if (Math.abs(e.clientX - panContext.startX) > 4 || Math.abs(e.clientY - panContext.startY) > 4) {
+          panContext.moved = true;
+        }
         const dx = (e.clientX - panContext.startX) / viewBoxState.zoom;
         const dy = (e.clientY - panContext.startY) / viewBoxState.zoom;
         viewBoxState.x = panContext.origX - dx;
         viewBoxState.y = panContext.origY - dy;
         applyViewBox();
+        positionFloatingBar();
       }
       if (marqueeContext) {
         const pt = svgEl.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
@@ -2169,7 +2191,21 @@
     });
 
     svgEl?.addEventListener('pointerup', (e) => {
-      if (panContext) { panContext = null; return; }
+      if (panContext) {
+        const wasTap = !panContext.moved;
+        panContext = null;
+        if (wasTap) {
+          labState.selectedComponentId = null;
+          selectedCompIds.clear();
+          selectedWireId = null;
+          labState.selectedPortId = null;
+          const tw = document.getElementById('tempWire');
+          if (tw) tw.style.display = 'none';
+          syncSelectionClasses();
+          positionFloatingBar();
+        }
+        return;
+      }
       if (marqueeContext) {
         const mr = document.getElementById('marqueeRect');
         const pt = svgEl.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
@@ -2493,7 +2529,7 @@
         question: questionText.trim(),
         history: tutorHistory.slice(-6),
         evidence: {
-          modelVersion: '3.1.5',
+          modelVersion: '3.1.6',
           status: sim.status,
           diagnostics: sim.diagnostics,
           measurements: sim.values,
@@ -2532,6 +2568,10 @@
         const isGuidedFlow = qClean.includes('أوم') || qClean.includes('اوم') || qClean.includes('ohm') || (guidedState && /^(تم|done|ok|جاهز|خلصت|أكملت)$/.test(qClean));
         if (isGuidedFlow) {
           fallbackMsg = runLocalGuidedFallback(questionText, sim);
+        } else if (labState.components.length === 0) {
+          fallbackMsg = currentLang === 'ar'
+            ? 'ساحة العمل فارغة حالياً! ما رأيك أن نبدأ معاً بأحد هذه التجارب؟\n1. دائرة قانون أوم وحماية LED (اكتب: أريد دائرة قانون أوم)\n2. مصباح مع مقاومة متغيرة (Potentiometer)\n3. بوابة منطقية AND مع مؤشر رقمي\nأو أضف أي قطعة من الشريط العلوي ثم اضغط «حلّل دائرتي الآن».'
+            : 'The workspace is currently empty! Would you like to try one of these circuits?\n1. Ohm’s Law & LED protection (type: Ohm’s Law)\n2. Lamp with variable resistor (Potentiometer)\n3. Digital AND gate with Logic Probe\nOr place any part from the top bar and click "Analyze My Circuit".';
         } else {
           try {
             tutorAdapter.setSnapshotRevision(labState.revision);
@@ -2581,9 +2621,16 @@
       e.preventDefault();
       const msgEl = document.getElementById('fbMessage');
       const statusEl = document.getElementById('fbStatus');
+      const fbTypeVal = document.getElementById('fbType')?.value || 'suggestion';
+      const fbMsgVal = msgEl?.value || '';
       const items = JSON.parse(localStorage.getItem('mamal_ai_feedback') || '[]');
-      items.push({ type: document.getElementById('fbType')?.value, message: msgEl?.value, date: new Date().toISOString() });
+      items.push({ type: fbTypeVal, message: fbMsgVal, date: new Date().toISOString() });
       localStorage.setItem('mamal_ai_feedback', JSON.stringify(items));
+      fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ 'form-name': 'mamal-feedback', type: fbTypeVal, message: fbMsgVal }).toString(),
+      }).catch(() => {});
       if (msgEl) msgEl.value = '';
       if (statusEl) {
         statusEl.textContent = t('fbSaved'); statusEl.style.display = 'block';

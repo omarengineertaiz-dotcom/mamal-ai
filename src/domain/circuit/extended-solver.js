@@ -1,5 +1,5 @@
 /**
- * Mamal AI v3.1.5 - Extended Educational Circuit Solver (Analog MNA + Nonlinear Diode/LED + Digital Logic Engine)
+ * Mamal AI v3.1.6 - Extended Educational Circuit Solver (Analog MNA + Nonlinear Diode/LED + Digital Logic Engine)
  * Computes node voltages, total current, Req, exact activeCompIds, activeWireIds,
  * enforces Diode/LED forward polarity & Vf threshold, and evaluates Digital Logic networks.
  */
@@ -156,7 +156,7 @@ export function simulateExtended(snapshot) {
   const digital = evaluateDigitalNetwork(components, wires);
 
   const result = {
-    modelVersion: '3.1.5',
+    modelVersion: '3.1.6',
     status: 'open',
     values: {
       sourceVoltageV: null,

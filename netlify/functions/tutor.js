@@ -1,9 +1,10 @@
 /**
- * Mamal AI v3.1.5 - Hardened Netlify Serverless Function for Gemini AI Tutor
- * Enforces Origin allowlist CORS, payload size cap, input validation, per-IP rate limiting, and upstream timeout.
+ * Mamal AI v3.1.6 - Hardened Netlify Serverless Function for Gemini AI Tutor
+ * Uses x-goog-api-key header, thinkingBudget: 0, maxOutputTokens: 1024, Socratic guidance,
+ * strict Origin/Referer CORS allowlist, 24KB payload cap, per-IP rate limiting, and 12s timeout.
  */
 
-const MAX_BODY_BYTES = 24 * 1024; // 24 KB
+const MAX_BODY_BYTES = 24 * 1024;
 const MAX_QUESTION_LEN = 600;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 20;
@@ -47,7 +48,6 @@ function checkRateLimit(ip) {
   }
   fresh.push(now);
   ipBuckets.set(ip, fresh);
-  // Prevent unbounded memory growth across warm invocations
   if (ipBuckets.size > 500) {
     const oldestKey = ipBuckets.keys().next().value;
     ipBuckets.delete(oldestKey);
@@ -123,14 +123,16 @@ export async function handler(event) {
 
     const systemPrompt = `أنت "مرشد معمل AI" — معيد هندسة كهربائية وإلكترونية تفاعلي داخل مختبر محاكاة دوائر (2D) شبيه بـ Multisim.
 
-أسلوبك التفاعلي الصارم خطوة بخطوة:
-1. إذا طلب الطالب بناء دائرة (مثل: "أريد عمل دائرة قانون أوم" أو "دائرة LED" أو "مجزئ جهد"):
-   - الخطوة الأولى: اذكر له القطع المطلوبة بالضبط (1، 2، 3...) بقيمها المقترحة، واطلب منه تنزيلها من شريط القطع العلوي ثم كتابة "تم".
-   - الخطوة الثانية (عندما يكتب "تم"): افحص قائمة components الفعلية المرفقة في JSON بدقة! إذا نقصت أي قطعة، أخبره بالقطعة الناقصة بالاسم. إذا اكتملت القطع، انتقل للتوصيل واطلب منه توصيل الأسلاك بالترتيب (منفذ إلى منفذ) ثم كتابة "تم".
-   - الخطوة الثالثة (عندما يكتب "تم" بعد التوصيل): افحص wires و status و diagnostics الفعلية في JSON! إذا كان هناك خطأ توصيل أو قطعة غير موصولة أو مفتاح مفتوح أو LED معكوس، حدد الخطأ بالضبط وكيف يصححه. إذا كانت الدائرة سليمة (valid)، هنّئه واشرح له القراءة الفيزيائية (التيار والجهد) باختصار.
-2. التزم 100% ببيانات القطع والأسلاك والقياسات المرفقة في JSON ولا تخترع قراءات غير موجودة.
-3. أجب بنفس لغة الطالب (العربية إذا كتب بالعربية، والإنجليزية إذا كتب بالإنجليزية).
-4. اجعل ردودك واضحة، منظمة بنقاط قصيرة (3 إلى 6 أسطر)، ومباشرة بدون حشو.`;
+أسلوبك التربوي السقراطي خطوة بخطوة:
+1. إذا كانت ساحة العمل فارغة (components مصفوفة فارغة):
+   - أخبر الطالب بلطف أن ساحة العمل فارغة حالياً، واقترح عليه 3 تجارب عملية ممتعة يبدأ بها (مثل: دائرة قانون أوم وحماية LED، مصباح بمقاومة متغيرة، أو بوابة منطقية AND مع مؤشر رقمي)، واسأله أي تجربة يريد أن يبدأ بها.
+2. إذا طلب الطالب بناء دائرة (مثل: "أريد عمل دائرة قانون أوم" أو "اقترح دوائر"):
+   - قسّم البناء لمراحل قصيرة: اطلب منه أولاً إضافة القطع الأساسية ثم كتابة "تم"، ثم وجّهه للتوصيل، ثم للتحقق من القراءات.
+3. عند وجود خطأ في الدائرة (مثل REVERSED_LED أو MISSING_RESISTOR أو SOURCE_SHORT أو SWITCH_OPEN أو OPEN_CIRCUIT):
+   - ابدأ دائماً بسؤال سقراطي موجّه يساعد الطالب على اكتشاف سبب الخطأ بنفسه دون إعطاء الحل المباشر من أول مرة.
+   - إذا تكرر نفس الخطأ في سجل المحادثة أو طلب الطالب الحل مباشرة، عندها قدّم له خطوة التصحيح المحددة بوضوح.
+4. التزم 100% ببيانات القطع والأسلاك والقياسات المرفقة في JSON ولا تخترع قراءات غير موجودة.
+5. أجب بنفس لغة الطالب (العربية أو الإنجليزية) بإيجاز واضح (3 إلى 5 أسطر قصيرة بدون حشو).`;
 
     const recentHistoryText = history.length > 0
       ? `\nسجل المحادثة الأخيرة:\n${history.map((m) => `${m.role === 'user' ? 'الطالب' : 'المرشد'}: ${m.text}`).join('\n')}\n`
@@ -143,7 +145,7 @@ ${recentHistoryText}
 اللغة الافتراضية: ${locale}`;
 
     const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
@@ -152,14 +154,18 @@ ${recentHistoryText}
     try {
       apiResp = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
         signal: controller.signal,
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemPrompt }] },
           contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
           generationConfig: {
             temperature: 0.35,
-            maxOutputTokens: 420,
+            maxOutputTokens: 1024,
+            thinkingConfig: { thinkingBudget: 0 },
           },
         }),
       });
@@ -168,22 +174,24 @@ ${recentHistoryText}
     }
 
     if (!apiResp.ok) {
-      const errText = await apiResp.text();
       return {
         statusCode: 502,
         headers,
-        body: JSON.stringify({ error: 'GEMINI_UPSTREAM_ERROR', detail: errText.slice(0, 200), fallback: true }),
+        body: JSON.stringify({ error: 'GEMINI_UPSTREAM_ERROR', upstreamStatus: apiResp.status, fallback: true }),
       };
     }
 
     const data = await apiResp.json();
-    const message = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    const candidate = data?.candidates?.[0];
+    const parts = candidate?.content?.parts || [];
+    const message = parts.map((p) => (typeof p?.text === 'string' ? p.text : '')).join('').trim();
+    const finishReason = candidate?.finishReason || 'UNKNOWN';
 
     if (!message) {
       return {
         statusCode: 502,
         headers,
-        body: JSON.stringify({ error: 'EMPTY_GEMINI_RESPONSE', fallback: true }),
+        body: JSON.stringify({ error: 'EMPTY_GEMINI_RESPONSE', finishReason, fallback: true }),
       };
     }
 
@@ -196,6 +204,7 @@ ${recentHistoryText}
         snapshotRevision,
         message,
         stepId,
+        finishReason,
         source: 'gemini',
       }),
     };
@@ -206,7 +215,6 @@ ${recentHistoryText}
       headers,
       body: JSON.stringify({
         error: isAbort ? 'GEMINI_TIMEOUT' : 'TUTOR_FUNCTION_ERROR',
-        detail: String(err?.message || err).slice(0, 160),
         fallback: true,
       }),
     };

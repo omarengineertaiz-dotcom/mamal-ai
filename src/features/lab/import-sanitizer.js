@@ -1,5 +1,5 @@
 /**
- * Mamal AI v3.1.5 - Circuit Import Validator & Sanitizer
+ * Mamal AI v3.1.6 - Circuit Import Validator & Sanitizer
  * Protects against XSS / SVG injection when loading external .mamal or .json files.
  */
 
